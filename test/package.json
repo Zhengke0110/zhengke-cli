@@ -21,6 +21,6 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@zhengke996/test-cli-lib": "^1.0.1"
+    "@zhengke996/test-cli-lib": "^1.0.2"
   }
 }
