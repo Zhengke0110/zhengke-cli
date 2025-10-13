@@ -1,15 +1,26 @@
 {
   "name": "@zhengke996/test-cli",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "index.js",
   "bin": {
     "test-cli": "bin/index.ts"
   },
   "scripts": {
+    "dev": "ts-node bin/index.ts",
+    "build": "tsc",
+    "start": "node dist/bin/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@zhengke996/test-cli-lib": "^1.0.1"
+  }
 }
