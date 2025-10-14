@@ -35,8 +35,8 @@ export function createLogger(options: LoggerOptions = {}) {
           winston.format.errors({ stack: true }),
           winston.format.uncolorize(),
           winston.format.printf((info: winston.Logform.TransformableInfo) => {
-            const { level, message, timestamp, service: svc } = info;
-            return `${timestamp} [${svc}]-[${level}]: ${message}`;
+            const { level, message, timestamp } = info;
+            return `${timestamp} [${level}]: ${message}`;
           })
         ),
       })
@@ -52,20 +52,24 @@ export function createLogger(options: LoggerOptions = {}) {
       winston.format.errors({ stack: true }),
       winston.format.colorize(),
       winston.format.printf((info: winston.Logform.TransformableInfo) => {
-        const { level, message, timestamp, service: svc } = info;
-        return `${timestamp} [${svc}]-[${level}]: ${message}`;
+        const { level, message, timestamp } = info;
+        return `${timestamp} [${level}]: ${message}`;
       })
     ),
     defaultMeta: { service },
     transports,
   });
 
-  // 如果不是生产环境，输出更详细的日志
-  if (process.env['NODE_ENV'] !== 'production') {
-    logger.level = 'debug';
-  }
-
   return logger;
+}
+
+/**
+ * 设置 logger 的日志级别
+ * @param logger Winston logger 实例
+ * @param level 日志级别 (error, warn, info, debug 等)
+ */
+export function setLoggerLevel(logger: winston.Logger, level: string) {
+  logger.level = level;
 }
 
 // 导出类型

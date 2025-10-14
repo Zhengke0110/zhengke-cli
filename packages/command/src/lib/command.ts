@@ -13,7 +13,9 @@ export function createProgram(config?: {
   program
     .name(config?.name || 'zk-cli')
     .description(config?.description || 'ZK CLI - 一个基于 Nx 和 TypeScript 的命令行工具')
-    .version(config?.version || '0.0.1');
+    .version(config?.version || '0.0.1')
+    // 添加全局 --debug 选项
+    .option('--debug', '启用调试模式，显示详细日志', false);
 
   return program;
 }

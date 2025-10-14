@@ -12,9 +12,11 @@ export const initCommand: CommandDefinition = {
     { flags: '-t, --template <template>', description: '项目模板', defaultValue: 'default' },
   ],
   action: (options) => {
+    logger.debug('开始执行 init 命令');
     logger.info('执行 init 命令');
     logger.info(`项目名称: ${options.name || '未指定'}`);
     logger.info(`项目模板: ${options.template}`);
+    logger.debug('init 命令执行完成');
   },
 };
 
@@ -28,9 +30,11 @@ export const createCommand: CommandDefinition = {
     { flags: '-t, --type <type>', description: '模块类型', defaultValue: 'component' },
   ],
   action: (name, options) => {
+    logger.debug(`开始执行 create 命令, 参数: name=${name}, type=${options.type}`);
     logger.info('执行 create 命令');
     logger.info(`模块名称: ${name}`);
     logger.info(`模块类型: ${options.type}`);
+    logger.debug('create 命令执行完成');
   },
 };
 
@@ -45,9 +49,11 @@ export const buildCommand: CommandDefinition = {
     { flags: '-w, --watch', description: '监听模式', defaultValue: false },
   ],
   action: (options) => {
+    logger.debug(`开始执行 build 命令, 参数: env=${options.env}, watch=${options.watch}`);
     logger.info('执行 build 命令');
     logger.info(`环境: ${options.env}`);
     logger.info(`监听模式: ${options.watch ? '是' : '否'}`);
+    logger.debug('build 命令执行完成');
   },
 };
 

@@ -2,7 +2,8 @@
 
 import { createProgram, registerCommands, runProgram } from '@zhengke0110/command';
 import { commands } from './lib/commands';
-import { cli } from './lib/cli';
+import { logger } from './lib/logger';
+import { setLoggerLevel } from '@zhengke0110/utils';
 
 // 创建命令程序
 const program = createProgram({
@@ -14,7 +15,17 @@ const program = createProgram({
 // 注册所有命令
 registerCommands(program, commands);
 
+// 在解析命令之前，先处理 --debug 选项
+const args = process.argv;
+const isDebugMode = args.includes('--debug');
+
+// 根据 debug 模式设置日志级别
+if (isDebugMode) {
+  setLoggerLevel(logger, 'debug');
+  logger.debug('Debug 模式已启用');
+} else {
+  setLoggerLevel(logger, 'info');
+}
+
 // 运行程序
 runProgram(program);
-
-cli();
