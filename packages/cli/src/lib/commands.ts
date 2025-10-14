@@ -1,5 +1,6 @@
 import logger from './logger';
 import type { CommandDefinition } from '@zhengke0110/command';
+import { success } from '@zhengke0110/utils';
 
 /**
  * init 命令定义
@@ -13,9 +14,17 @@ export const initCommand: CommandDefinition = {
   ],
   action: (options) => {
     logger.debug('开始执行 init 命令');
+    
+    if (!options.name) {
+      logger.error('项目名称不能为空');
+      logger.warn('请使用 --name 参数指定项目名称');
+      return;
+    }
+    
     logger.info('执行 init 命令');
-    logger.info(`项目名称: ${options.name || '未指定'}`);
+    logger.info(`项目名称: ${options.name}`);
     logger.info(`项目模板: ${options.template}`);
+    logger.info(success('项目初始化成功！'));
     logger.debug('init 命令执行完成');
   },
 };
@@ -34,6 +43,7 @@ export const createCommand: CommandDefinition = {
     logger.info('执行 create 命令');
     logger.info(`模块名称: ${name}`);
     logger.info(`模块类型: ${options.type}`);
+    logger.info(success(`模块 ${name} 创建成功！`));
     logger.debug('create 命令执行完成');
   },
 };
@@ -53,6 +63,16 @@ export const buildCommand: CommandDefinition = {
     logger.info('执行 build 命令');
     logger.info(`环境: ${options.env}`);
     logger.info(`监听模式: ${options.watch ? '是' : '否'}`);
+    
+    // 模拟构建过程
+    logger.info('正在构建项目...');
+    
+    // 模拟警告
+    if (options.env !== 'production') {
+      logger.warn('当前不是生产环境，构建产物未压缩');
+    }
+    
+    logger.info(success('项目构建完成！'));
     logger.debug('build 命令执行完成');
   },
 };
