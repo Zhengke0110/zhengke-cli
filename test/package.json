@@ -17,10 +17,11 @@
   "description": "",
   "devDependencies": {
     "@types/node": "^24.7.2",
+    "@types/yargs": "^17.0.33",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@zhengke996/test-cli-lib": "^1.0.2"
+    "yargs": "^18.0.0"
   }
 }
