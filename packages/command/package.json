@@ -1,0 +1,15 @@
+{
+  "name": "@zhengke0110/command",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "publishConfig": {
+    "main": "./src/index.js",
+    "types": "./src/index.d.ts"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0",
+    "commander": "^12.0.0"
+  }
+}

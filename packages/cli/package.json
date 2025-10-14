@@ -7,8 +7,16 @@
   "bin": {
     "zk-cli": "./src/index.js"
   },
+  "publishConfig": {
+    "main": "./src/index.js",
+    "types": "./src/index.d.ts",
+    "bin": {
+      "zk-cli": "./src/index.js"
+    }
+  },
   "dependencies": {
     "tslib": "^2.3.0",
-    "winston": "^3.18.3"
+    "@zhengke0110/command": "*",
+    "@zhengke0110/utils": "*"
   }
 }
