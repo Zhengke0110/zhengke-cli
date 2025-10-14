@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { createProgram, registerCommands, runProgram } from '@zhengke0110/command';
-import { ensureNodeVersion, setLoggerLevel } from '@zhengke0110/utils';
+import { ensureNodeVersion, setLoggerLevel, setupGlobalErrorHandlers, handleError } from '@zhengke0110/utils';
 import { commands } from './lib/commands.js';
 import { logger } from './lib/logger.js';
 import { CLI_CONFIG } from './lib/config.js';
@@ -11,6 +11,11 @@ import { CLI_CONFIG } from './lib/config.js';
 // ============================================
 const args = process.argv;
 const isDebugMode = args.includes('--debug');
+
+// ============================================
+// 2. 设置全局错误处理器（需要知道 debug 模式）
+// ============================================
+setupGlobalErrorHandlers({ logger, debug: isDebugMode });
 
 // 根据 debug 模式设置日志级别
 if (isDebugMode) {
@@ -22,22 +27,26 @@ if (isDebugMode) {
 }
 
 // ============================================
-// 2. 创建并配置命令程序（包含 preAction hook）
+// 3. 创建并配置命令程序（包含 preAction hook）
 // ============================================
-const program = createProgram({
-  name: CLI_CONFIG.NAME,
-  description: CLI_CONFIG.DESCRIPTION,
-  version: CLI_CONFIG.VERSION,
-  // 在执行任何命令之前检查 Node.js 版本
-  preAction: () => {
-    ensureNodeVersion(CLI_CONFIG.MIN_NODE_VERSION, logger);
-  },
-});
+try {
+  const program = createProgram({
+    name: CLI_CONFIG.NAME,
+    description: CLI_CONFIG.DESCRIPTION,
+    version: CLI_CONFIG.VERSION,
+    // 在执行任何命令之前检查 Node.js 版本
+    preAction: () => {
+      ensureNodeVersion(CLI_CONFIG.MIN_NODE_VERSION, logger);
+    },
+  });
 
-// 注册所有命令
-registerCommands(program, commands);
+  // 注册所有命令
+  registerCommands(program, commands);
 
-// ============================================
-// 3. 运行程序
-// ============================================
-runProgram(program);
+  // ============================================
+  // 4. 运行程序
+  // ============================================
+  runProgram(program);
+} catch (error) {
+  handleError(error as Error, logger);
+}
