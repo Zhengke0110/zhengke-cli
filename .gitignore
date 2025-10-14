@@ -1,4 +1,57 @@
+# IDEs and Editors
 .vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
 
+# Dependencies
+node_modules
 /**/node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+dist
 /**/dist
+build
+coverage
+*.tsbuildinfo
+
+# Nx
+.nx/installation
+.nx/cache
+.nx/workspace-data
+
+# AI Tools
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+# Testing
+coverage
+*.lcov
+.nyc_output
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp
+temp
+*.tmp
