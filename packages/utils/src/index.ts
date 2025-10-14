@@ -1,2 +1,2 @@
-export * from './lib/logger';
-export * from './lib/version-checker';
+export * from './lib/logger.js';
+export * from './lib/version-checker.js';

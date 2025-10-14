@@ -1,7 +1,7 @@
 {
   "name": "@zhengke0110/command",
   "version": "0.0.1",
-  "type": "commonjs",
+  "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "publishConfig": {

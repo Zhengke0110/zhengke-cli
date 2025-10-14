@@ -6,4 +6,4 @@ export {
   type CommandDefinition,
   type CommandOption,
   type CreateProgramConfig,
-} from './lib/command';
+} from './lib/command.js';

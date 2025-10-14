@@ -2,9 +2,9 @@
 
 import { createProgram, registerCommands, runProgram } from '@zhengke0110/command';
 import { ensureNodeVersion, setLoggerLevel } from '@zhengke0110/utils';
-import { commands } from './lib/commands';
-import { logger } from './lib/logger';
-import { CLI_CONFIG } from './lib/config';
+import { commands } from './lib/commands.js';
+import { logger } from './lib/logger.js';
+import { CLI_CONFIG } from './lib/config.js';
 
 // ============================================
 // 1. 处理 --debug 选项（需要在创建 program 之前）
