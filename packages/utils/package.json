@@ -9,7 +9,11 @@
     "types": "./src/index.d.ts"
   },
   "dependencies": {
+    "semver": "^7.7.3",
     "tslib": "^2.3.0",
     "winston": "^3.18.3"
+  },
+  "devDependencies": {
+    "@types/semver": "^7.7.1"
   }
 }

@@ -4,6 +4,9 @@
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "bin": {
     "zk-cli": "./src/index.js"
   },

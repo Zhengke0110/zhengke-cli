@@ -1,13 +1,22 @@
 import { Command } from 'commander';
 
 /**
- * 创建命令程序实例
+ * 创建命令程序实例的配置
  */
-export function createProgram(config?: {
+export interface CreateProgramConfig {
   name?: string;
   description?: string;
   version?: string;
-}) {
+  /**
+   * 在执行任何命令之前运行的钩子函数
+   */
+  preAction?: () => void | Promise<void>;
+}
+
+/**
+ * 创建命令程序实例
+ */
+export function createProgram(config?: CreateProgramConfig) {
   const program = new Command();
 
   program
@@ -16,6 +25,11 @@ export function createProgram(config?: {
     .version(config?.version || '0.0.1')
     // 添加全局 --debug 选项
     .option('--debug', '启用调试模式，显示详细日志', false);
+
+  // 如果提供了 preAction hook，则添加到 program 上
+  if (config?.preAction) {
+    program.hook('preAction', config.preAction);
+  }
 
   return program;
 }
