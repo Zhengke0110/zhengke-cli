@@ -105,7 +105,7 @@ echo ""
 
 # 7. 创建新版本
 info "创建新版本: $VERSION_TYPE"
-npx nx release version $VERSION_TYPE --skip-publish || error "版本创建失败"
+npx nx release version $VERSION_TYPE || error "版本创建失败"
 success "版本已更新"
 echo ""
 
