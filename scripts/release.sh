@@ -109,17 +109,21 @@ npx nx release version $VERSION_TYPE || error "版本创建失败"
 success "版本已更新"
 echo ""
 
-# 8. 获取新版本号
+# 8. 获取新版本号和发布的包列表
 NEW_VERSION=$(node -p "require('./packages/cli/package.json').version")
 info "新版本: $NEW_VERSION"
+
+# 获取所有要发布的包
+PACKAGES=$(ls -d packages/*/ | xargs -n1 basename)
 echo ""
 
 # 9. 确认发布
 echo ""
 info "即将发布以下包到 npm:"
-echo "  - @zhengke0110/cli@$NEW_VERSION"
-echo "  - @zhengke0110/command@$NEW_VERSION"
-echo "  - @zhengke0110/utils@$NEW_VERSION"
+for pkg in $PACKAGES; do
+  PKG_VERSION=$(node -p "require('./packages/$pkg/package.json').version")
+  echo "  - @zhengke0110/$pkg@$PKG_VERSION"
+done
 echo ""
 read -p "确认发布? (y/N): " -n 1 -r
 echo ""
@@ -158,9 +162,10 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 success "发布流程完成!"
 echo ""
 echo "📦 发布的包:"
-echo "  • @zhengke0110/cli@$NEW_VERSION"
-echo "  • @zhengke0110/command@$NEW_VERSION"
-echo "  • @zhengke0110/utils@$NEW_VERSION"
+for pkg in $PACKAGES; do
+  PKG_VERSION=$(node -p "require('./packages/$pkg/package.json').version")
+  echo "  • @zhengke0110/$pkg@$PKG_VERSION"
+done
 echo ""
 echo "📝 下一步:"
 echo "  • 测试安装: npm install -g @zhengke0110/cli"
