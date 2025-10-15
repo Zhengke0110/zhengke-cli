@@ -55,3 +55,5 @@ Thumbs.db
 tmp
 temp
 *.tmp
+
+test-*

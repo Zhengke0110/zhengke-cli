@@ -1,6 +1,7 @@
 import logger from './logger.js';
 import type { CommandDefinition } from '@zhengke0110/command';
 import { success, wrapAsyncHandler, ValidationError } from '@zhengke0110/utils';
+import { handleInit, type InitOptions } from './init-handler.js';
 
 /**
  * 检测是否为 debug 模式
@@ -15,34 +16,10 @@ export const initCommand: CommandDefinition = {
   description: '初始化一个新项目',
   options: [
     { flags: '-n, --name <name>', description: '项目名称' },
-    { flags: '-t, --template <template>', description: '项目模板', defaultValue: 'default' },
+    { flags: '-t, --template <template>', description: '项目模板（可选，不指定则交互式选择）' },
   ],
-  action: wrapAsyncHandler(async (options: { name?: string; template?: string }) => {
-    logger.debug('开始执行 init 命令');
-
-    // 使用自定义错误类进行验证
-    if (!options.name) {
-      throw new ValidationError(
-        'name',
-        '项目名称不能为空，请使用 --name 参数指定'
-      );
-    }
-
-    // 模拟异步操作
-    logger.info('执行 init 命令');
-    logger.info(`项目名称: ${options.name}`);
-    logger.info(`项目模板: ${options.template}`);
-
-    // 模拟文件系统操作
-    const projectPath = `./${options.name}`;
-    logger.debug(`准备创建项目目录: ${projectPath}`);
-
-    // 这里可以添加实际的文件系统操作
-    // 如果操作失败,抛出 FileSystemError
-    // throw new FileSystemError(`无法创建目录: ${projectPath}`, { path: projectPath });
-
-    logger.info(success('项目初始化成功！'));
-    logger.debug('init 命令执行完成');
+  action: wrapAsyncHandler(async (options: InitOptions) => {
+    await handleInit(options);
   }, { logger, debug: isDebugMode() }),
 };
 
