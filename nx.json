@@ -38,8 +38,16 @@
     "sharedGlobals": []
   },
   "release": {
+    "projects": ["cli", "command", "utils"],
+    "projectsRelationship": "independent",
     "version": {
       "preVersionCommand": "npx nx run-many -t build"
+    },
+    "changelog": {
+      "workspaceChangelog": false,
+      "projectChangelogs": {
+        "createRelease": "github"
+      }
     }
   },
   "plugins": [
