@@ -1,6 +1,6 @@
 {
   "name": "@zhengke0110/cli",
-  "version": "0.0.5",
+  "version": "0.0.1",
   "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -18,8 +18,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@zhengke0110/command": "^0.0.1",
-    "@zhengke0110/utils": "^0.0.1",
+    "@zhengke0110/command": "workspace:*",
+    "@zhengke0110/utils": "workspace:*",
     "chalk": "^5.6.2",
     "tslib": "^2.3.0"
   }
