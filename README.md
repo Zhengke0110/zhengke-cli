@@ -82,6 +82,29 @@ npm run build
 node dist/packages/cli/src/index.js init --name test-app
 ```
 
+## 发布
+
+### 发布流程
+
+使用自动化脚本发布新版本:
+
+```bash
+npm run release          # 默认发布 patch 版本
+npm run release:patch    # 补丁版本 (1.0.0 -> 1.0.1)
+npm run release:minor    # 次要版本 (1.0.0 -> 1.1.0)
+npm run release:major    # 主要版本 (1.0.0 -> 2.0.0)
+```
+
+脚本会自动执行:检查工作区、运行测试、构建、创建版本、发布到 npm、推送到 GitHub。
+
+### 版本语义化
+
+遵循 [语义化版本 2.0.0](https://semver.org/lang/zh-CN/):
+
+- **patch**: Bug 修复
+- **minor**: 新功能
+- **major**: 破坏性更新
+
 ## 许可证
 
 MIT

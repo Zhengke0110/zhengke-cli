@@ -21,7 +21,10 @@
     "dev": "./scripts/dev-mode.sh",
     "test": "nx run-many -t test",
     "lint": "nx run-many -t lint",
-    "publish:all": "nx release publish"
+    "release": "./scripts/release.sh",
+    "release:patch": "./scripts/release.sh patch",
+    "release:minor": "./scripts/release.sh minor",
+    "release:major": "./scripts/release.sh major"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
