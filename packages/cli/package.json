@@ -1,6 +1,6 @@
 {
   "name": "@zhengke0110/cli",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -10,16 +10,17 @@
   "bin": {
     "zk-cli": "./src/index.js"
   },
+  "files": [
+    "src",
+    "README.md"
+  ],
   "publishConfig": {
-    "main": "./src/index.js",
-    "types": "./src/index.d.ts",
-    "bin": {
-      "zk-cli": "./src/index.js"
-    }
+    "access": "public"
   },
   "dependencies": {
-    "tslib": "^2.3.0",
-    "@zhengke0110/command": "*",
-    "@zhengke0110/utils": "*"
+    "@zhengke0110/command": "^0.0.1",
+    "@zhengke0110/utils": "^0.0.1",
+    "chalk": "^5.6.2",
+    "tslib": "^2.3.0"
   }
 }
