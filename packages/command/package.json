@@ -1,6 +1,6 @@
 {
   "name": "@zhengke0110/command",
-  "version": "0.0.3",
+  "version": "0.0.1",
   "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
