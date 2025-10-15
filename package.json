@@ -17,8 +17,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "nx run-many -t build",
-    "build:cli": "./scripts/build-cli.sh",
+    "build": "./scripts/build-cli.sh",
     "dev": "./scripts/dev-mode.sh",
     "test": "nx run-many -t test",
     "lint": "nx run-many -t lint",

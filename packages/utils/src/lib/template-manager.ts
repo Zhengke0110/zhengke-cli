@@ -314,12 +314,23 @@ export async function installTemplate(
       },
     });
 
-    // 更新 package.json 中的项目名称
+    // 更新 package.json 中的项目信息
     const packageJsonPath = path.join(targetPath, 'package.json');
     if (await fs.pathExists(packageJsonPath)) {
       const packageJson = await fs.readJson(packageJsonPath);
+      
+      // 更新基本信息
       packageJson.name = projectName;
       packageJson.version = '0.0.1';
+      packageJson.description = ''; // 清空描述,让用户自己填写
+      
+      // 移除模板相关的配置
+      delete packageJson.repository; // 移除模板仓库信息
+      delete packageJson.files; // 移除 npm 发布文件配置
+      delete packageJson.publishConfig; // 移除发布配置
+      delete packageJson.keywords; // 移除关键词
+      delete packageJson.author; // 清空作者信息
+      
       await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
     }
 
