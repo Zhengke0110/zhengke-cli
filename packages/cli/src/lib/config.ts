@@ -1,3 +1,13 @@
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, '../../package.json'), 'utf-8')
+);
+
 /**
  * CLI 配置常量
  */
@@ -20,5 +30,5 @@ export const CLI_CONFIG = {
   /**
    * CLI 版本
    */
-  VERSION: '0.0.1',
+  VERSION: packageJson.version,
 } as const;
