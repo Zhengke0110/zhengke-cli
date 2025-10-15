@@ -4,6 +4,7 @@ import os from 'os';
 import { execSync } from 'child_process';
 import ora from 'ora';
 import inquirer from 'inquirer';
+import { extract as tarExtract } from 'tar';
 import { FileSystemError, NetworkError } from './errors.js';
 
 /**
@@ -18,22 +19,14 @@ export interface TemplateInfo {
 }
 
 /**
- * 可用的模板列表
+ * 模板 scope (npm 组织名称)
  */
-export const AVAILABLE_TEMPLATES: TemplateInfo[] = [
-  {
-    name: 'react-ts',
-    displayName: 'React + TypeScript',
-    packageName: '@zhengke0110/template-react-ts',
-    description: 'React 19 + TypeScript + Vite 7',
-  },
-  {
-    name: 'vue-ts',
-    displayName: 'Vue + TypeScript',
-    packageName: '@zhengke0110/template-vue-ts',
-    description: 'Vue 3 + TypeScript + Vite 7',
-  },
-];
+const TEMPLATE_SCOPE = '@zhengke0110';
+
+/**
+ * 模板包名前缀
+ */
+const TEMPLATE_PREFIX = 'template-';
 
 /**
  * 获取缓存目录
@@ -44,37 +37,141 @@ export function getCacheDir(): string {
 }
 
 /**
+ * npm 包数据接口
+ */
+interface NpmPackageData {
+  name: string;
+  version: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * 从包名解析模板信息
+ */
+function parseTemplateInfo(packageName: string, packageData: NpmPackageData): TemplateInfo | null {
+  // 检查是否是模板包
+  if (!packageName.startsWith(`${TEMPLATE_SCOPE}/${TEMPLATE_PREFIX}`)) {
+    return null;
+  }
+
+  // 提取模板名称 (去掉 scope 和 template- 前缀)
+  const fullName = packageName.replace(`${TEMPLATE_SCOPE}/`, '');
+  const name = fullName.replace(TEMPLATE_PREFIX, '');
+
+  // 从 description 或包名生成 displayName
+  let displayName = name;
+  if (name === 'react-ts') {
+    displayName = 'React + TypeScript';
+  } else if (name === 'vue-ts') {
+    displayName = 'Vue + TypeScript';
+  } else {
+    // 将 kebab-case 转换为 Title Case
+    displayName = name
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
+  return {
+    name,
+    displayName,
+    packageName,
+    description: packageData.description || `${displayName} template for zhengke-cli`,
+    version: packageData.version,
+  };
+}
+
+/**
  * 从 npm 获取模板列表
  */
 export async function fetchAvailableTemplates(): Promise<TemplateInfo[]> {
   const spinner = ora('正在获取可用模板...').start();
   
   try {
-    const templates = [...AVAILABLE_TEMPLATES];
-    
-    // 获取每个模板的最新版本
-    for (const template of templates) {
-      try {
-        const version = execSync(
-          `npm view ${template.packageName} version`,
-          { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
-        ).trim();
-        template.version = version;
-      } catch {
-        // 如果获取版本失败，使用默认值
-        template.version = 'latest';
+    // 搜索 @zhengke0110 scope 下的所有包
+    const searchOutput = execSync(
+      `npm search ${TEMPLATE_SCOPE} --json`,
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: 10 * 1024 * 1024 }
+    ).trim();
+
+    if (!searchOutput || searchOutput === '[]') {
+      spinner.info('npm search 未返回结果，使用备用方案...');
+      return fetchTemplatesFallback();
+    }
+
+    const packages = JSON.parse(searchOutput) as NpmPackageData[];
+    const templates: TemplateInfo[] = [];
+
+    // 解析每个包的信息，只保留模板包
+    for (const pkg of packages) {
+      // 只处理模板包
+      if (pkg.name.startsWith(`${TEMPLATE_SCOPE}/${TEMPLATE_PREFIX}`)) {
+        const templateInfo = parseTemplateInfo(pkg.name, pkg);
+        if (templateInfo) {
+          templates.push(templateInfo);
+        }
       }
     }
-    
-    spinner.succeed('模板列表获取成功');
+
+    if (templates.length === 0) {
+      spinner.info('未找到模板包，使用备用方案...');
+      return fetchTemplatesFallback();
+    }
+
+    spinner.succeed(`找到 ${templates.length} 个可用模板`);
     return templates;
-  } catch (error) {
-    spinner.fail('获取模板列表失败');
+  } catch {
+    spinner.info('npm search 失败，使用备用方案...');
+    return fetchTemplatesFallback();
+  }
+}
+
+/**
+ * 备用方案：从已知的模板列表获取
+ */
+async function fetchTemplatesFallback(): Promise<TemplateInfo[]> {
+  const spinner = ora('正在获取模板详情...').start();
+  
+  const knownTemplates = [
+    '@zhengke0110/template-react-ts',
+    '@zhengke0110/template-vue-ts',
+  ];
+
+  const templates: TemplateInfo[] = [];
+
+  for (const packageName of knownTemplates) {
+    try {
+      const viewOutput = execSync(
+        `npm view ${packageName} --json`,
+        { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: 10 * 1024 * 1024 }
+      ).trim();
+
+      if (!viewOutput) {
+        continue;
+      }
+
+      const packageData = JSON.parse(viewOutput) as NpmPackageData;
+      const templateInfo = parseTemplateInfo(packageName, packageData);
+      
+      if (templateInfo) {
+        templates.push(templateInfo);
+      }
+    } catch {
+      // 跳过无法获取的包
+      continue;
+    }
+  }
+
+  if (templates.length === 0) {
+    spinner.fail('未找到任何可用模板');
     throw new NetworkError(
-      '无法从 npm 获取模板列表',
-      error as Error
+      '无法从 npm 获取模板列表，请检查网络连接'
     );
   }
+
+  spinner.succeed(`找到 ${templates.length} 个可用模板`);
+  return templates;
 }
 
 /**
@@ -152,10 +249,11 @@ export async function downloadTemplate(template: TemplateInfo): Promise<string> 
 
     const tarballPath = path.join(cacheDir, tarballName);
 
-    // 解压 tarball
-    execSync(`tar -xzf "${tarballName}" -C "${templateCacheDir}" --strip-components=1`, {
-      cwd: cacheDir,
-      stdio: 'pipe',
+    // 使用 tar 库解压 (跨平台兼容)
+    await tarExtract({
+      file: tarballPath,
+      cwd: templateCacheDir,
+      strip: 1, // 去掉顶层的 package 目录
     });
 
     // 删除 tarball 文件

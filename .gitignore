@@ -56,4 +56,4 @@ tmp
 temp
 *.tmp
 
-test-*
+test*
