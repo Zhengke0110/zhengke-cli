@@ -1,0 +1,46 @@
+{
+  "name": "@zhengke0110/template-vue-ts",
+  "version": "0.0.2",
+  "description": "Vue 3 + TypeScript + Vite template for zhengke-cli",
+  "type": "module",
+  "keywords": [
+    "vue",
+    "vue3",
+    "typescript",
+    "vite",
+    "template",
+    "zhengke-cli"
+  ],
+  "author": "zhengke0110",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zhengke0110/zhengke-cli.git",
+    "directory": "template/vue-ts-template"
+  },
+  "files": [
+    "**/*",
+    "!node_modules",
+    "!dist",
+    "!.git"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.7",
+    "vue-tsc": "^3.1.0"
+  }
+}
