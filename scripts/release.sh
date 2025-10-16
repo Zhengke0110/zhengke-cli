@@ -143,18 +143,6 @@ git push origin $CURRENT_BRANCH --follow-tags || warning "推送失败,请手动
 success "推送完成"
 echo ""
 
-# 11. 验证发布
-info "验证发布..."
-info "等待 30 秒以便 npm 同步新版本..."
-sleep 30
-PUBLISHED_VERSION=$(npm view @zhengke0110/cli version 2>/dev/null || echo "未找到")
-if [ "$PUBLISHED_VERSION" = "$NEW_VERSION" ]; then
-  success "npm 上的版本已确认: $PUBLISHED_VERSION"
-else
-  warning "npm 上的版本 ($PUBLISHED_VERSION) 与预期 ($NEW_VERSION) 不一致,可能需要等待一段时间同步"
-fi
-echo ""
-
 # 完成
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -166,8 +154,14 @@ for pkg in $PACKAGES; do
   echo "  • @zhengke0110/$pkg@$PKG_VERSION"
 done
 echo ""
+info "💡 提示: npm 需要几分钟时间同步新版本，请稍后验证"
+echo ""
 echo "🔗 链接:"
 echo "  • npm: https://www.npmjs.com/package/@zhengke0110/cli"
 echo "  • GitHub: https://github.com/Zhengke0110/zhengke-cli"
+echo ""
+echo "📝 验证命令:"
+echo "  • npm view @zhengke0110/cli version"
+echo "  • npm install -g @zhengke0110/cli@$NEW_VERSION"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
