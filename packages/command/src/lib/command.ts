@@ -50,7 +50,6 @@ export interface CommandDefinition {
   name: string;
   description: string;
   options?: CommandOption[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   action: (...args: any[]) => void | Promise<void>;
 }
 

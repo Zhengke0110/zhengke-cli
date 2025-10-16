@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import chalk from 'chalk';
 import type { Logger } from './logger.js';
 import { CLIError, ErrorCode } from './errors.js';

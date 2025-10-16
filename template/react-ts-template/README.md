@@ -7,8 +7,7 @@ React + TypeScript + Vite 项目模板
 - ⚡️ **Vite** - 极速的开发服务器和构建工具
 - ⚛️ **React 19** - 最新版本的 React
 - 🎨 **TypeScript** - 类型安全的 JavaScript
-- 📦 **ESLint** - 代码质量检查
-- 🔥 **热模块替换 (HMR)** - 快速开发体验
+- **热模块替换 (HMR)** - 快速开发体验
 
 ## 使用方式
 
