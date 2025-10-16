@@ -1,4 +1,12 @@
 import { GitHubClient } from './github-client.js';
+import {
+    GitHubSearchQuery,
+    RepositorySortOrder,
+    SortDirection,
+    DefaultSearchConfig,
+    GitHubErrorMessages,
+    RepositoryDefaults,
+} from './constants.js';
 
 /**
  * GitHub 仓库模板信息
@@ -53,9 +61,9 @@ export class TemplateSearcher {
         const {
             keyword = '',
             language,
-            userOnly = true,
-            templateOnly = false,
-            maxResults = 30,
+            userOnly = DefaultSearchConfig.USER_ONLY,
+            templateOnly = DefaultSearchConfig.TEMPLATE_ONLY,
+            maxResults = DefaultSearchConfig.MAX_RESULTS,
         } = options;
 
         try {
@@ -64,52 +72,60 @@ export class TemplateSearcher {
             // 构建搜索查询
             const queryParts: string[] = [];
 
+            // 如果只搜索模板仓库，必须加上 is:template
+            if (templateOnly) {
+                queryParts.push(GitHubSearchQuery.IS_TEMPLATE);
+            }
+
+            if (userOnly) {
+                const username = await this.client.getAuthenticatedUser();
+                queryParts.push(`${GitHubSearchQuery.USER_PREFIX}${username}`);
+            }
+
             if (keyword) {
                 queryParts.push(keyword);
             }
 
             if (language) {
-                queryParts.push(`language:${language}`);
-            }
-
-            if (templateOnly) {
-                queryParts.push('is:template');
-            }
-
-            if (userOnly) {
-                const username = await this.client.getAuthenticatedUser();
-                queryParts.push(`user:${username}`);
+                queryParts.push(`${GitHubSearchQuery.LANGUAGE_PREFIX}${language}`);
             }
 
             const query = queryParts.join(' ');
 
             if (!query) {
-                throw new Error('At least one search criteria must be provided');
+                throw new Error(GitHubErrorMessages.NO_SEARCH_CRITERIA);
             }
 
             // 执行搜索
             const { data } = await octokit.search.repos({
                 q: query,
-                sort: 'updated',
-                order: 'desc',
-                per_page: Math.min(maxResults, 100),
+                sort: DefaultSearchConfig.SORT,
+                order: DefaultSearchConfig.ORDER,
+                per_page: Math.min(maxResults, DefaultSearchConfig.PER_PAGE),
             });
 
             // 转换为模板格式
-            return data.items.map((repo) => ({
+            const results = data.items.map((repo) => ({
                 fullName: repo.full_name,
                 name: repo.name,
-                owner: repo.owner?.login || '',
+                owner: repo.owner?.login || RepositoryDefaults.OWNER,
                 description: repo.description,
                 language: repo.language,
-                stars: repo.stargazers_count || 0,
-                isTemplate: repo.is_template || false,
-                updatedAt: repo.updated_at || '',
+                stars: repo.stargazers_count || RepositoryDefaults.STARS,
+                isTemplate: repo.is_template || RepositoryDefaults.IS_TEMPLATE,
+                updatedAt: repo.updated_at || RepositoryDefaults.UPDATED_AT,
                 url: repo.html_url,
             }));
+
+            // 如果指定了 templateOnly，进行二次过滤确保只返回模板仓库
+            if (templateOnly) {
+                return results.filter(repo => repo.isTemplate);
+            }
+
+            return results;
         } catch (error) {
             if (error instanceof Error) {
-                throw new Error(`Failed to search GitHub templates: ${error.message}`);
+                throw new Error(GitHubErrorMessages.SEARCH_TEMPLATES_FAILED(error.message));
             }
             throw error;
         }
@@ -125,24 +141,24 @@ export class TemplateSearcher {
 
             const { data } = await octokit.repos.listForUser({
                 username,
-                sort: 'updated',
-                per_page: 100,
+                sort: DefaultSearchConfig.SORT,
+                per_page: DefaultSearchConfig.PER_PAGE,
             });
 
             return data.map((repo) => ({
                 fullName: repo.full_name,
                 name: repo.name,
-                owner: repo.owner?.login || '',
+                owner: repo.owner?.login || RepositoryDefaults.OWNER,
                 description: repo.description,
-                language: repo.language || null,
-                stars: repo.stargazers_count || 0,
-                isTemplate: repo.is_template || false,
-                updatedAt: repo.updated_at || '',
+                language: repo.language || RepositoryDefaults.LANGUAGE,
+                stars: repo.stargazers_count || RepositoryDefaults.STARS,
+                isTemplate: repo.is_template || RepositoryDefaults.IS_TEMPLATE,
+                updatedAt: repo.updated_at || RepositoryDefaults.UPDATED_AT,
                 url: repo.html_url,
             }));
         } catch (error) {
             if (error instanceof Error) {
-                throw new Error(`Failed to get user repositories: ${error.message}`);
+                throw new Error(GitHubErrorMessages.GET_USER_REPOS_FAILED(error.message));
             }
             throw error;
         }

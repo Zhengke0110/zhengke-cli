@@ -5,12 +5,13 @@ import { ensureNodeVersion, setLoggerLevel, setupGlobalErrorHandlers, handleErro
 import { commands } from './lib/commands.js';
 import { logger } from './lib/logger.js';
 import { CLI_CONFIG } from './lib/config.js';
+import { CliArguments, LogLevel, CliMessages } from './lib/constants.js';
 
 // ============================================
 // 1. 处理 --debug 选项（需要在创建 program 之前）
 // ============================================
 const args = process.argv;
-const isDebugMode = args.includes('--debug');
+const isDebugMode = args.includes(CliArguments.DEBUG);
 
 // ============================================
 // 2. 设置全局错误处理器（需要知道 debug 模式）
@@ -19,11 +20,11 @@ setupGlobalErrorHandlers({ logger, debug: isDebugMode });
 
 // 根据 debug 模式设置日志级别
 if (isDebugMode) {
-  setLoggerLevel(logger, 'debug');
-  logger.debug('Debug 模式已启用');
-  logger.debug(`Node.js 版本: ${process.version}`);
+  setLoggerLevel(logger, LogLevel.DEBUG);
+  logger.debug(CliMessages.DEBUG_ENABLED);
+  logger.debug(CliMessages.NODE_VERSION(process.version));
 } else {
-  setLoggerLevel(logger, 'info');
+  setLoggerLevel(logger, LogLevel.INFO);
 }
 
 // ============================================

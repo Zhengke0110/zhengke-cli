@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { DefaultConfig, GlobalOptions } from './constants.js';
 
 /**
  * 创建命令程序实例的配置
@@ -20,11 +21,11 @@ export function createProgram(config?: CreateProgramConfig) {
   const program = new Command();
 
   program
-    .name(config?.name || 'zk-cli')
-    .description(config?.description || 'ZK CLI - 一个基于 Nx 和 TypeScript 的命令行工具')
-    .version(config?.version || '0.0.1')
+    .name(config?.name || DefaultConfig.CLI_NAME)
+    .description(config?.description || DefaultConfig.CLI_DESCRIPTION)
+    .version(config?.version || DefaultConfig.CLI_VERSION)
     // 添加全局 --debug 选项
-    .option('--debug', '启用调试模式，显示详细日志', false);
+    .option(GlobalOptions.DEBUG_FLAG, GlobalOptions.DEBUG_DESCRIPTION, GlobalOptions.DEBUG_DEFAULT);
 
   // 如果提供了 preAction hook，则添加到 program 上
   if (config?.preAction) {

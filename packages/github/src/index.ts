@@ -8,4 +8,5 @@ export {
     TemplateDownloader,
     type DownloadOptions,
 } from './lib/template-downloader.js';
+export * from './lib/constants.js';
 

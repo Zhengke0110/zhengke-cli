@@ -1,5 +1,13 @@
 import * as winston from 'winston';
 import chalk from 'chalk';
+import { 
+    LogLevel, 
+    LogLevelLabels, 
+    LogIcons, 
+    TimeFormats, 
+    DefaultLoggerConfig,
+    EnvironmentVariables 
+} from './constants.js';
 
 export interface LoggerOptions {
   service?: string;
@@ -12,16 +20,16 @@ export interface LoggerOptions {
  */
 function getColoredLevel(level: string): string {
   switch (level) {
-    case 'error':
-      return chalk.red.bold('[error]');
-    case 'warn':
-      return chalk.yellow.bold('[warn]');
-    case 'info':
-      return chalk.cyan.bold('[info]');
-    case 'debug':
-      return chalk.gray.bold('[debug]');
-    case 'verbose':
-      return chalk.magenta.bold('[verbose]');
+    case LogLevel.ERROR:
+      return chalk.red.bold(LogLevelLabels[LogLevel.ERROR]);
+    case LogLevel.WARN:
+      return chalk.yellow.bold(LogLevelLabels[LogLevel.WARN]);
+    case LogLevel.INFO:
+      return chalk.cyan.bold(LogLevelLabels[LogLevel.INFO]);
+    case LogLevel.DEBUG:
+      return chalk.gray.bold(LogLevelLabels[LogLevel.DEBUG]);
+    case LogLevel.VERBOSE:
+      return chalk.magenta.bold(LogLevelLabels[LogLevel.VERBOSE]);
     default:
       return `[${level}]`;
   }
@@ -35,16 +43,16 @@ function getColoredMessage(level: string, message: string): string {
   const hasIcon = /^[✓✗⚠ℹ]/.test(message.trim());
   
   switch (level) {
-    case 'error':
-      return hasIcon ? chalk.red(message) : chalk.red(`✗ ${message}`);
-    case 'warn':
-      return hasIcon ? chalk.yellow(message) : chalk.yellow(`⚠ ${message}`);
-    case 'info':
+    case LogLevel.ERROR:
+      return hasIcon ? chalk.red(message) : chalk.red(`${LogIcons.ERROR} ${message}`);
+    case LogLevel.WARN:
+      return hasIcon ? chalk.yellow(message) : chalk.yellow(`${LogIcons.WARN} ${message}`);
+    case LogLevel.INFO:
       // info 级别不自动添加图标，保持简洁
       return message;
-    case 'debug':
+    case LogLevel.DEBUG:
       return chalk.gray(message);
-    case 'verbose':
+    case LogLevel.VERBOSE:
       return chalk.magenta(message);
     default:
       return message;
@@ -58,8 +66,8 @@ function getColoredMessage(level: string, message: string): string {
  */
 export function createLogger(options: LoggerOptions = {}) {
   const {
-    service = 'app',
-    level = process.env['LOG_LEVEL'] || 'info',
+    service = DefaultLoggerConfig.SERVICE,
+    level = process.env[EnvironmentVariables.LOG_LEVEL] || DefaultLoggerConfig.LEVEL,
     logFilePath,
   } = options;
 
@@ -75,7 +83,7 @@ export function createLogger(options: LoggerOptions = {}) {
         filename: logFilePath,
         format: winston.format.combine(
           winston.format.timestamp({
-            format: 'YYYY-MM-DD HH:mm:ss',
+            format: TimeFormats.DEFAULT,
           }),
           winston.format.errors({ stack: true }),
           // 文件输出不使用颜色
@@ -97,7 +105,7 @@ export function createLogger(options: LoggerOptions = {}) {
     level,
     format: winston.format.combine(
       winston.format.timestamp({
-        format: 'YYYY-MM-DD HH:mm:ss',
+        format: TimeFormats.DEFAULT,
       }),
       winston.format.errors({ stack: true }),
       // 移除 winston 自带的 colorize，改用 chalk
@@ -138,7 +146,7 @@ export function setLoggerLevel(logger: winston.Logger, level: string) {
  * 可以在 logger.info() 中使用，例如：logger.info(success('操作成功'))
  */
 export function success(message: string): string {
-  return chalk.green(`✓ ${message}`);
+  return chalk.green(`${LogIcons.SUCCESS} ${message}`);
 }
 
 // 导出类型

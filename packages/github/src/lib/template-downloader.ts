@@ -2,6 +2,14 @@ import { execSync } from 'child_process';
 import { existsSync, rmSync } from 'fs';
 import { join } from 'path';
 import { GitHubTemplate } from './template-searcher.js';
+import {
+    GitHubApi,
+    GitConstants,
+    DefaultDownloadConfig,
+    GitHubErrorMessages,
+    GitCommands,
+    UrlPatterns,
+} from './constants.js';
 
 /**
  * 下载选项
@@ -30,7 +38,11 @@ export class TemplateDownloader {
     repoFullName: string,
     options: DownloadOptions
   ): Promise<void> {
-    const { targetDir, force = false, verbose = false } = options;
+    const { 
+      targetDir, 
+      force = DefaultDownloadConfig.FORCE, 
+      verbose = DefaultDownloadConfig.VERBOSE 
+    } = options;
 
     try {
       // 从 URL 或完整名称提取仓库信息
@@ -41,15 +53,15 @@ export class TemplateDownloader {
         if (force) {
           rmSync(targetDir, { recursive: true, force: true });
         } else {
-          throw new Error(`Target directory ${targetDir} already exists. Use force option to overwrite.`);
+          throw new Error(GitHubErrorMessages.TARGET_DIR_EXISTS(targetDir));
         }
       }
 
       // 构建 GitHub URL
-      const githubUrl = `https://github.com/${repo}.git`;
+      const githubUrl = `${GitHubApi.BASE_URL}/${repo}${GitHubApi.GIT_EXTENSION}`;
 
       // 使用 git clone --depth 1 下载
-      const cloneCmd = `git clone --depth 1 ${githubUrl} "${targetDir}"`;
+      const cloneCmd = GitCommands.CLONE_SHALLOW(githubUrl, targetDir);
 
       if (verbose) {
         console.log(`执行命令: ${cloneCmd}`);
@@ -61,14 +73,14 @@ export class TemplateDownloader {
       });
 
       // 删除 .git 目录
-      const gitDir = join(targetDir, '.git');
+      const gitDir = join(targetDir, GitConstants.GIT_DIR);
       if (existsSync(gitDir)) {
         rmSync(gitDir, { recursive: true, force: true });
       }
 
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(`Failed to download template: ${error.message}`);
+        throw new Error(GitHubErrorMessages.DOWNLOAD_TEMPLATE_FAILED(error.message));
       }
       throw error;
     }
@@ -94,17 +106,17 @@ export class TemplateDownloader {
   private parseRepoIdentifier(identifier: string): string {
     // 如果是 URL，提取 owner/repo
     if (identifier.startsWith('http')) {
-      const match = identifier.match(/github\.com\/([^/]+\/[^/]+)/);
+      const match = identifier.match(UrlPatterns.GITHUB_HTTP);
       if (match) {
-        return match[1].replace(/\.git$/, '');
+        return match[1].replace(UrlPatterns.GIT_EXTENSION, '');
       }
     }
 
     // 如果是 git@ 格式
     if (identifier.startsWith('git@')) {
-      const match = identifier.match(/github\.com:([^/]+\/[^/]+)/);
+      const match = identifier.match(UrlPatterns.GITHUB_SSH);
       if (match) {
-        return match[1].replace(/\.git$/, '');
+        return match[1].replace(UrlPatterns.GIT_EXTENSION, '');
       }
     }
 

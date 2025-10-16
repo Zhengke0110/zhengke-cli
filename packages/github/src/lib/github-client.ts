@@ -1,4 +1,5 @@
 import { Octokit } from '@octokit/rest';
+import { GitHubErrorMessages } from './constants.js';
 
 /**
  * GitHub API 客户端
@@ -33,7 +34,7 @@ export class GitHubClient {
             this.authenticatedUser = data.login;
             return this.authenticatedUser;
         } catch {
-            throw new Error('Failed to get authenticated user. Please check your GitHub token.');
+            throw new Error(GitHubErrorMessages.GET_AUTHENTICATED_USER_FAILED);
         }
     }
 
