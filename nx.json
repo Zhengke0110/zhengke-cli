@@ -35,7 +35,10 @@
     "projects": ["cli", "command", "utils", "github"],
     "projectsRelationship": "fixed",
     "version": {
-      "preVersionCommand": "npx nx run-many -t build"
+      "preVersionCommand": "npx nx run-many -t build",
+      "versionActionsOptions": {
+        "skipLockFileUpdate": true
+      }
     },
     "changelog": {
       "workspaceChangelog": false,
