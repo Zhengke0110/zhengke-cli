@@ -29,55 +29,13 @@ export interface InitOptions {
 }
 
 /**
- * 项目类型
+ * 显示项目初始化完成信息
  */
-type ProjectType = 'node' | 'java-maven' | 'java-gradle' | 'unknown';
-
-/**
- * 检测项目类型
- */
-function detectProjectType(projectPath: string): ProjectType {
-    if (existsSync(path.join(projectPath, 'package.json'))) {
-        return 'node';
-    }
-    if (existsSync(path.join(projectPath, 'pom.xml'))) {
-        return 'java-maven';
-    }
-    if (
-        existsSync(path.join(projectPath, 'build.gradle')) ||
-        existsSync(path.join(projectPath, 'build.gradle.kts'))
-    ) {
-        return 'java-gradle';
-    }
-    return 'unknown';
-}
-
-/**
- * 根据项目类型显示后续步骤
- */
-function showNextSteps(projectName: string, projectType: ProjectType): void {
+function showNextSteps(projectName: string): void {
     logger.info(chalk.green('\n✨ 项目初始化成功！\n'));
     logger.info(chalk.cyan('接下来的步骤:'));
     logger.info(chalk.white(`  cd ${projectName}`));
-
-    switch (projectType) {
-        case 'node':
-            logger.info(chalk.white('  npm install  # 如果依赖未自动安装'));
-            logger.info(chalk.white('  npm run dev'));
-            break;
-        case 'java-maven':
-            logger.info(chalk.white('  mvn clean install'));
-            logger.info(chalk.white('  mvn spring-boot:run  # 如果是 Spring Boot 项目'));
-            break;
-        case 'java-gradle':
-            logger.info(chalk.white('  gradle build'));
-            logger.info(chalk.white('  gradle bootRun  # 如果是 Spring Boot 项目'));
-            break;
-        default:
-            logger.info(
-                chalk.white('  # 请参考项目的 README.md 文件了解如何运行')
-            );
-    }
+    logger.info(chalk.white(`  # 请根据项目的 README.md 文件指示进行操作`));
     logger.info('');
 }
 
@@ -109,9 +67,8 @@ export async function handleInit(options: InitOptions): Promise<void> {
             await handleBuiltinTemplate(options, projectName, projectPath);
         }
 
-        // 检测项目类型并显示后续步骤
-        const projectType = detectProjectType(projectPath);
-        showNextSteps(projectName, projectType);
+        // 显示后续步骤
+        showNextSteps(projectName);
     } catch (error) {
         logger.error(chalk.red('项目初始化失败'));
         throw error;
@@ -303,18 +260,12 @@ async function handleGitHubTemplateSearch(projectPath: string): Promise<void> {
 
     logger.info(chalk.green('✓ 模板下载完成'));
 
-    // 检测项目类型
-    const projectType = detectProjectType(projectPath);
-
-    // 只对 Node.js 项目尝试安装依赖
-    if (projectType === 'node') {
-        logger.debug('检测到 Node.js 项目，安装依赖');
+    // 尝试自动安装 Node.js 项目依赖
+    if (existsSync(path.join(projectPath, 'package.json'))) {
         try {
             await installDependencies(projectPath);
         } catch {
-            logger.warn(chalk.yellow('⚠️  依赖安装失败，请手动执行 npm install'));
+            logger.warn(chalk.yellow(`⚠️  依赖安装失败，请手动运行 npm install`));
         }
-    } else if (projectType === 'java-maven' || projectType === 'java-gradle') {
-        logger.info(chalk.blue(`ℹ️  检测到 ${projectType === 'java-maven' ? 'Maven' : 'Gradle'} 项目，请手动安装依赖`));
     }
 }
