@@ -218,6 +218,7 @@ async function handleGitHubTemplateSearch(projectPath: string): Promise<void> {
         keyword: keyword || undefined,
         language: language || undefined,
         userOnly: true,
+        templateOnly: true, // 只搜索 GitHub Template Repository
         maxResults: 30,
     });
 
