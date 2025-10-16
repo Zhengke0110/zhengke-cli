@@ -95,16 +95,16 @@ if [ "$CLEAN_INSTALL" = true ]; then
   echo ""
 fi
 
-# 5. 构建所有包
-info "构建所有包..."
-npm run build
-success "构建完成"
-echo ""
-
-# 6. 创建新版本
+# 5. 创建新版本
 info "创建新版本: $VERSION_TYPE"
 npx nx release version $VERSION_TYPE || error "版本创建失败"
 success "版本已更新"
+echo ""
+
+# 6. 构建所有包（在版本更新后构建，确保 dist 中包含正确的版本号）
+info "构建所有包..."
+npm run build
+success "构建完成"
 echo ""
 
 # 7. 获取新版本号和发布的包列表
