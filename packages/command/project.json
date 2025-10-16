@@ -3,13 +3,6 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/command/src",
   "projectType": "library",
-  "release": {
-    "version": {
-      "manifestRootsToUpdate": ["{projectRoot}", "dist/{projectRoot}"],
-      "currentVersionResolver": "registry",
-      "fallbackCurrentVersionResolver": "disk"
-    }
-  },
   "tags": [],
   "targets": {
     "build": {
@@ -19,14 +12,7 @@
         "outputPath": "dist/packages/command",
         "main": "packages/command/src/index.ts",
         "tsConfig": "packages/command/tsconfig.lib.json",
-        "assets": [
-          "packages/command/*.md",
-          {
-            "input": "packages/command",
-            "glob": "package.json",
-            "output": "."
-          }
-        ]
+        "assets": ["packages/command/*.md", "packages/command/package.json"]
       }
     },
     "nx-release-publish": {

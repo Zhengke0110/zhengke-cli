@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # 自动化发布脚本
-# 用法: ./scripts/release.sh [patch|minor|major|version]
+# 用法: ./scripts/release.sh [patch|minor|major|version] [--clean]
 # 示例: ./scripts/release.sh patch
+#       ./scripts/release.sh patch --clean
 #       ./scripts/release.sh 1.2.3
 
 set -e
@@ -34,6 +35,14 @@ error() {
 
 # 检查参数
 VERSION_TYPE=${1:-patch}
+CLEAN_INSTALL=false
+
+# 解析命令行参数
+for arg in "$@"; do
+  if [ "$arg" = "--clean" ]; then
+    CLEAN_INSTALL=true
+  fi
+done
 
 if [ -z "$VERSION_TYPE" ]; then
   error "请指定版本类型: patch, minor, major 或具体版本号"
@@ -77,19 +86,28 @@ git pull origin $CURRENT_BRANCH || warning "无法拉取最新代码,继续..."
 success "代码已更新"
 echo ""
 
-# 4. 构建所有包
+# 4. 清理并重新安装依赖（可选）
+if [ "$CLEAN_INSTALL" = true ]; then
+  info "清理并重新安装依赖..."
+  rm -rf node_modules package-lock.json
+  npm install
+  success "依赖已重新安装"
+  echo ""
+fi
+
+# 5. 构建所有包
 info "构建所有包..."
 npm run build
 success "构建完成"
 echo ""
 
-# 5. 创建新版本
+# 6. 创建新版本
 info "创建新版本: $VERSION_TYPE"
 npx nx release version $VERSION_TYPE || error "版本创建失败"
 success "版本已更新"
 echo ""
 
-# 6. 获取新版本号和发布的包列表
+# 7. 获取新版本号和发布的包列表
 NEW_VERSION=$(node -p "require('./packages/cli/package.json').version")
 info "新版本: $NEW_VERSION"
 
@@ -97,7 +115,7 @@ info "新版本: $NEW_VERSION"
 PACKAGES=$(ls -d packages/*/ | xargs -n1 basename)
 echo ""
 
-# 7. 确认发布
+# 8. 确认发布
 echo ""
 info "即将发布以下包到 npm:"
 for pkg in $PACKAGES; do
@@ -113,21 +131,22 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 echo ""
 
-# 8. 发布到 npm
+# 9. 发布到 npm
 info "发布到 npm..."
 npx nx release publish --skip-checks --first-release || error "发布失败"
 success "发布成功!"
 echo ""
 
-# 9. 推送到远程仓库
+# 10. 推送到远程仓库
 info "推送到远程仓库..."
 git push origin $CURRENT_BRANCH --follow-tags || warning "推送失败,请手动推送"
 success "推送完成"
 echo ""
 
-# 10. 验证发布
+# 11. 验证发布
 info "验证发布..."
-sleep 3
+info "等待 30 秒以便 npm 同步新版本..."
+sleep 30
 PUBLISHED_VERSION=$(npm view @zhengke0110/cli version 2>/dev/null || echo "未找到")
 if [ "$PUBLISHED_VERSION" = "$NEW_VERSION" ]; then
   success "npm 上的版本已确认: $PUBLISHED_VERSION"

@@ -3,13 +3,6 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/github/src",
   "projectType": "library",
-  "release": {
-    "version": {
-      "manifestRootsToUpdate": ["dist/{projectRoot}"],
-      "currentVersionResolver": "git-tag",
-      "fallbackCurrentVersionResolver": "disk"
-    }
-  },
   "tags": [],
   "targets": {
     "build": {
@@ -19,7 +12,7 @@
         "outputPath": "dist/packages/github",
         "main": "packages/github/src/index.ts",
         "tsConfig": "packages/github/tsconfig.lib.json",
-        "assets": ["packages/github/*.md"]
+        "assets": ["packages/github/*.md", "packages/github/package.json"]
       }
     },
     "nx-release-publish": {
