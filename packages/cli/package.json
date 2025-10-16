@@ -8,7 +8,7 @@
     "node": ">=16.0.0"
   },
   "bin": {
-    "zk-cli": "./src/index.js"
+    "zhengke-cli": "./src/index.js"
   },
   "files": [
     "src",
