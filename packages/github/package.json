@@ -1,6 +1,6 @@
 {
   "name": "@zhengke0110/github",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
