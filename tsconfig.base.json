@@ -17,6 +17,7 @@
     "paths": {
       "@zhengke0110/cli": ["packages/cli/src/index.ts"],
       "@zhengke0110/command": ["packages/command/src/index.ts"],
+      "@zhengke0110/github": ["packages/github/src/index.ts"],
       "@zhengke0110/utils": ["packages/utils/src/index.ts"]
     }
   },

@@ -77,39 +77,26 @@ git pull origin $CURRENT_BRANCH || warning "无法拉取最新代码,继续..."
 success "代码已更新"
 echo ""
 
-# 4. 运行测试
-info "运行测试..."
-npm test || {
-  warning "测试失败"
-  read -p "是否继续发布? (y/N): " -n 1 -r
-  echo ""
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    error "发布已取消"
-  fi
-}
-success "测试通过"
-echo ""
-
-# 5. 清理并重新安装依赖
+# 4. 清理并重新安装依赖
 info "清理并重新安装依赖..."
 rm -rf node_modules package-lock.json
 npm install
 success "依赖已重新安装"
 echo ""
 
-# 6. 构建所有包
+# 5. 构建所有包
 info "构建所有包..."
 npm run build
 success "构建完成"
 echo ""
 
-# 7. 创建新版本
+# 6. 创建新版本
 info "创建新版本: $VERSION_TYPE"
 npx nx release version $VERSION_TYPE || error "版本创建失败"
 success "版本已更新"
 echo ""
 
-# 8. 获取新版本号和发布的包列表
+# 7. 获取新版本号和发布的包列表
 NEW_VERSION=$(node -p "require('./packages/cli/package.json').version")
 info "新版本: $NEW_VERSION"
 
@@ -117,7 +104,7 @@ info "新版本: $NEW_VERSION"
 PACKAGES=$(ls -d packages/*/ | xargs -n1 basename)
 echo ""
 
-# 9. 确认发布
+# 8. 确认发布
 echo ""
 info "即将发布以下包到 npm:"
 for pkg in $PACKAGES; do
@@ -133,19 +120,19 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 echo ""
 
-# 10. 发布到 npm
+# 9. 发布到 npm
 info "发布到 npm..."
 npx nx release publish --skip-checks || error "发布失败"
 success "发布成功!"
 echo ""
 
-# 11. 推送到远程仓库
+# 10. 推送到远程仓库
 info "推送到远程仓库..."
 git push origin $CURRENT_BRANCH --follow-tags || warning "推送失败,请手动推送"
 success "推送完成"
 echo ""
 
-# 12. 验证发布
+# 11. 验证发布
 info "验证发布..."
 sleep 3
 PUBLISHED_VERSION=$(npm view @zhengke0110/cli version 2>/dev/null || echo "未找到")

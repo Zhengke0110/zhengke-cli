@@ -17,6 +17,7 @@ export const initCommand: CommandDefinition = {
   options: [
     { flags: '-n, --name <name>', description: '项目名称' },
     { flags: '-t, --template <template>', description: '项目模板（可选，不指定则交互式选择）' },
+    { flags: '-g, --github', description: '从个人 GitHub 账号搜索模板' },
   ],
   action: wrapAsyncHandler(async (options: InitOptions) => {
     await handleInit(options);

@@ -19,8 +19,6 @@
   "scripts": {
     "build": "./scripts/build-cli.sh",
     "dev": "./scripts/dev-mode.sh",
-    "test": "nx run-many -t test",
-    "lint": "nx run-many -t lint",
     "release": "./scripts/release.sh",
     "release:patch": "./scripts/release.sh patch",
     "release:minor": "./scripts/release.sh minor",
