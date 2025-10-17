@@ -179,6 +179,10 @@ export const LOG_MESSAGES = {
   // 工作流相关
   FULL_FLOW_START: '🚀 开始完整 GitFlow 工作流...',
   GIT_REPO_INIT_SUCCESS: '✅ Git 仓库初始化成功',
+
+  // .gitignore 相关
+  GITIGNORE_EXISTS: '✓ .gitignore 文件已存在',
+  GITIGNORE_CREATED: '✓ .gitignore 文件创建成功',
 } as const;
 
 // 错误信息
@@ -192,3 +196,56 @@ export const ERROR_MESSAGES = {
   DEFAULT_BRANCH_FAILED: '设置默认分支失败',
   GITFLOW_FAILED: '❌ GitFlow 工作流失败',
 } as const;
+
+// .gitignore 默认模板
+export const GITIGNORE_TEMPLATE = `# Dependencies
+node_modules/
+bower_components/
+jspm_packages/
+
+# Build outputs
+dist/
+build/
+out/
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Misc
+*.pem
+.cache/
+.temp/
+.tmp/
+`;

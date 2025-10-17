@@ -18,7 +18,8 @@ import {
   VERSION_CONFIG,
   LOG_MESSAGES,
   GIT_OPERATIONS,
-  ERROR_MESSAGES
+  ERROR_MESSAGES,
+  GITIGNORE_TEMPLATE
 } from './constants.js';
 import { createLogger, success, type Logger } from '@zhengke0110/utils';
 import * as path from 'path';
@@ -166,6 +167,9 @@ export class GitFlow {
         }
       );
 
+      // 5. 创建 .gitignore 文件（如果不存在）
+      await this.createGitignoreIfNotExists();
+
       this.logger.info(success('✅ 仓库初始化完成'));
       return repoInfo;
     } catch (error) {
@@ -287,6 +291,23 @@ export class GitFlow {
     await this.remoteManager.push(this.branchManager.getMainBranch());
 
     this.logger.info(LOG_MESSAGES.INITIAL_COMMIT_PUSHED);
+  }
+
+  /**
+   * 创建 .gitignore 文件（如果不存在）
+   */
+  private async createGitignoreIfNotExists(): Promise<void> {
+    const gitignorePath = path.join(this.workDir, '.gitignore');
+
+    try {
+      // 检查 .gitignore 文件是否已存在
+      await fs.promises.access(gitignorePath);
+      this.logger.info(LOG_MESSAGES.GITIGNORE_EXISTS);
+    } catch {
+      // 文件不存在，创建它
+      await fs.promises.writeFile(gitignorePath, GITIGNORE_TEMPLATE, 'utf-8');
+      this.logger.info(success(LOG_MESSAGES.GITIGNORE_CREATED));
+    }
   }
 
   /**
