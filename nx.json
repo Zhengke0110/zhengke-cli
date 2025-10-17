@@ -32,7 +32,7 @@
     "sharedGlobals": []
   },
   "release": {
-    "projects": ["cli", "command", "utils", "github"],
+    "projects": ["cli", "command", "utils", "github", "git"],
     "projectsRelationship": "fixed",
     "version": {
       "preVersionCommand": "npx nx run-many -t build",

@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@nx/jest": "21.6.4",
-    "@nx/js": "^21.6.4",
+    "@nx/js": "21.6.5",
     "@swc-node/register": "~1.9.1",
     "@swc/core": "^1.9.0",
     "@swc/helpers": "~0.5.11",

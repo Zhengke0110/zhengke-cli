@@ -1,0 +1,24 @@
+{
+  "name": "git",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/git/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/git",
+        "main": "packages/git/src/index.ts",
+        "tsConfig": "packages/git/tsconfig.lib.json",
+        "assets": ["packages/git/*.md", "packages/git/package.json"]
+      }
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    }
+  }
+}
