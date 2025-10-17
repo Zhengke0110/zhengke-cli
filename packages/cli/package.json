@@ -18,9 +18,10 @@
     "access": "public"
   },
   "dependencies": {
-    "@zhengke0110/command": "2.0.0",
-    "@zhengke0110/github": "2.0.0",
-    "@zhengke0110/utils": "2.0.0",
+    "@zhengke0110/command": "*",
+    "@zhengke0110/git": "*",
+    "@zhengke0110/github": "*",
+    "@zhengke0110/utils": "*",
     "chalk": "^5.6.2",
     "inquirer": "^10.0.0",
     "tslib": "^2.3.0"
