@@ -8,7 +8,18 @@ import { VersionManager } from './version-manager.js';
 import { BranchManager } from './branch-manager.js';
 import { RemoteManager } from './remote-manager.js';
 import { IGitPlatformClient, RepoInfo } from './git-platform.js';
-import { GitPlatform, RepoType, VersionType, GIT_CONFIG_FILES } from './constants.js';
+import {
+  GitPlatform,
+  RepoType,
+  VersionType,
+  GIT_CONFIG_FILES,
+  COMMIT_MESSAGES,
+  CONFIG,
+  VERSION_CONFIG,
+  LOG_MESSAGES,
+  GIT_OPERATIONS,
+  ERROR_MESSAGES
+} from './constants.js';
 import { createLogger, success, type Logger } from '@zhengke0110/utils';
 import * as path from 'path';
 import * as os from 'os';
@@ -72,7 +83,7 @@ export class GitFlow {
       platform: this.platform,
     });
 
-    this.logger.info(success('GitFlow 初始化成功'));
+    this.logger.info(success(LOG_MESSAGES.GITFLOW_INIT_SUCCESS));
   }
 
   /**
@@ -86,7 +97,7 @@ export class GitFlow {
    * 写入配置文件
    */
   private async writeConfig(filePath: string, data: Record<string, any>): Promise<void> {
-    await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    await fs.promises.writeFile(filePath, JSON.stringify(data, null, CONFIG.JSON_INDENT), CONFIG.ENCODING);
   }
 
   /**
@@ -168,7 +179,7 @@ export class GitFlow {
    * 包括：初始化本地仓库、添加远程地址、拉取远程分支
    */
   async initGit(remoteUrl: string): Promise<void> {
-    this.logger.info('🚀 开始 Git 初始化...');
+    this.logger.info(LOG_MESSAGES.GIT_INIT_START);
 
     try {
       // 1. 检查是否已经是 Git 仓库
@@ -185,18 +196,18 @@ export class GitFlow {
       // 4. 检查是否有未提交的代码
       const hasChanges = await this.gitClient.hasUncommittedChanges();
       if (hasChanges) {
-        this.logger.info('检测到未提交的代码');
-        
+        this.logger.info(LOG_MESSAGES.UNCOMMITTED_CODE);
+
         // 5. 如果有代码变更，创建初始提交并推送到main分支
-        await this.gitClient.add('.');
-        await this.gitClient.commit('chore: initial commit');
-        
+        await this.gitClient.add(GIT_OPERATIONS.ADD_ALL);
+        await this.gitClient.commit(COMMIT_MESSAGES.INITIAL);
+
         // 6. 推送main分支，确保它成为默认分支
         await this.remoteManager.push(this.branchManager.getMainBranch());
-        this.logger.info('初始提交已推送到主分支');
+        this.logger.info(LOG_MESSAGES.INITIAL_COMMIT_PUSHED);
       }
 
-      this.logger.info(success('✅ Git 初始化完成'));
+      this.logger.info(success(LOG_MESSAGES.GIT_INIT_SUCCESS));
     } catch (error) {
       this.logger.error('❌ Git 初始化失败', error);
       throw error;
@@ -208,7 +219,7 @@ export class GitFlow {
    * 包括：版本号管理、代码提交、分支合并、推送到开发分支
    */
   async commit(options: CommitOptions): Promise<string> {
-    this.logger.info('🚀 开始 Git 提交...');
+    this.logger.info(LOG_MESSAGES.COMMIT_START);
 
     try {
       // 1. 确定版本号
@@ -220,7 +231,7 @@ export class GitFlow {
         // 从已有标签获取最新版本
         const tags = await this.gitClient.getTags();
         const suggestions = this.versionManager.suggestNextVersion(tags);
-        
+
         // 根据版本类型递增
         if (options.versionType) {
           version = this.versionManager.incrementVersion(options.versionType);
@@ -235,20 +246,20 @@ export class GitFlow {
       // 2. 检查 stash 区
       const stashList = await this.gitClient.stashList();
       if (stashList.total > 0) {
-        this.logger.warn('检测到 stash 区有未提交的内容');
+        this.logger.warn(LOG_MESSAGES.STASH_DETECTED);
       }
 
       // 3. 检查代码冲突
       const hasConflicts = await this.gitClient.hasConflicts();
       if (hasConflicts) {
-        throw new Error('存在代码冲突，请先解决冲突');
+        throw new Error(ERROR_MESSAGES.CONFLICTS_EXIST);
       }
 
       // 4. 自动提交未提交代码
       const hasChanges = await this.gitClient.hasUncommittedChanges();
       if (hasChanges) {
-        await this.gitClient.add('.');
-        await this.gitClient.commit(options.message || `chore: release ${formattedVersion}`);
+        await this.gitClient.add(GIT_OPERATIONS.ADD_ALL);
+        await this.gitClient.commit(options.message || `${COMMIT_MESSAGES.RELEASE} ${formattedVersion}`);
       }
 
       // 5. 创建或切换到开发分支
@@ -265,10 +276,10 @@ export class GitFlow {
       // 7. 推送到远程开发分支
       await this.remoteManager.pushAndSetUpstream(developBranch);
 
-      this.logger.info(success(`✅ Git 提交完成，版本: ${formattedVersion}`));
+      this.logger.info(success(`${LOG_MESSAGES.COMMIT_SUCCESS} ${formattedVersion}`));
       return formattedVersion;
     } catch (error) {
-      this.logger.error('❌ Git 提交失败', error);
+      this.logger.error(ERROR_MESSAGES.COMMIT_FAILED, error);
       throw error;
     }
   }
@@ -278,7 +289,7 @@ export class GitFlow {
    * 包括：合并到主分支、创建标签、推送、删除开发分支
    */
   async publish(version?: string): Promise<void> {
-    this.logger.info('🚀 开始 Git 推送...');
+    this.logger.info(LOG_MESSAGES.PUBLISH_START);
 
     try {
       // 1. 获取当前分支
@@ -290,31 +301,31 @@ export class GitFlow {
       // 如果不在开发分支，尝试找到最新的开发分支
       if (!isDevelopBranch) {
         const branches = await this.gitClient.getBranches();
-        
+
         // 检查本地分支
         let developBranches = branches.local.filter(b => b.startsWith('develop/'));
-        
+
         // 如果本地没有开发分支，检查远程分支
         if (developBranches.length === 0) {
           const remoteDevelopBranches = branches.remote
-            .filter(b => b.includes('/develop/'))
+            .filter(b => b.includes(CONFIG.DEVELOP_BRANCH_PREFIX))
             .map(b => b.replace(/^remotes\/[^/]+\//, '')); // 移除 remotes/origin/ 前缀
-          
+
           if (remoteDevelopBranches.length === 0) {
-            throw new Error('未找到开发分支，请先执行 git:commit 创建开发分支');
+            throw new Error(ERROR_MESSAGES.NO_DEVELOP_BRANCH);
           }
-          
+
           // 选择最新的远程开发分支（按版本号排序）
           developBranch = remoteDevelopBranches.sort().pop()!;
-          this.logger.info(`检出远程开发分支: ${developBranch}`);
-          
+          this.logger.info(`${LOG_MESSAGES.CHECKOUT_REMOTE_DEVELOP}: ${developBranch}`);
+
           // 从远程分支创建本地分支并切换
-          await this.gitClient.checkoutFromRemote(developBranch, `origin/${developBranch}`);
+          await this.gitClient.checkoutFromRemote(developBranch, `${CONFIG.DEFAULT_REMOTE}/${developBranch}`);
         } else {
           // 选择最新的本地开发分支（按版本号排序）
           developBranch = developBranches.sort().pop()!;
-          this.logger.info(`自动选择开发分支: ${developBranch}`);
-          
+          this.logger.info(`${LOG_MESSAGES.AUTO_SELECT_DEVELOP}: ${developBranch}`);
+
           // 切换到开发分支
           await this.gitClient.checkout(developBranch);
         }
@@ -324,8 +335,8 @@ export class GitFlow {
       await this.branchManager.checkoutMain();
 
       // 3. 合并开发分支到主分支
-      await this.gitClient.merge(developBranch, ['--no-ff']);
-      this.logger.info(success(`开发分支 ${developBranch} 已合并到主分支`));
+      await this.gitClient.merge(developBranch, [GIT_OPERATIONS.NO_FF_MERGE]);
+      this.logger.info(success(`${LOG_MESSAGES.DEVELOP_MERGED} ${developBranch} ${LOG_MESSAGES.MERGED_TO_MAIN}`));
 
       // 4. 创建并推送标签 - 从开发分支名称解析版本号
       let tagVersion: string;
@@ -333,15 +344,15 @@ export class GitFlow {
         tagVersion = version;
       } else {
         // 从开发分支名称提取版本号（例如 develop/0.0.1 -> 0.0.1）
-        const versionMatch = developBranch.match(/develop\/(.+)$/);
+        const versionMatch = developBranch.match(new RegExp(`${CONFIG.DEVELOP_BRANCH_PREFIX}(.+)$`));
         if (versionMatch) {
-          tagVersion = `v${versionMatch[1]}`;
+          tagVersion = `${VERSION_CONFIG.TAG_PREFIX}${versionMatch[1]}`;
         } else {
           tagVersion = this.versionManager.getFormattedVersion();
         }
       }
-      
-      await this.remoteManager.createAndPushTag(tagVersion, `Release ${tagVersion}`);
+
+      await this.remoteManager.createAndPushTag(tagVersion, `${COMMIT_MESSAGES.RELEASE_PREFIX} ${tagVersion}`);
 
       // 5. 推送主分支
       await this.remoteManager.push(this.branchManager.getMainBranch());
@@ -356,9 +367,9 @@ export class GitFlow {
       // 7. 删除本地开发分支
       await this.branchManager.deleteBranch(developBranch, { local: true, remote: true });
 
-      this.logger.info(success(`✅ Git 推送完成，版本: ${tagVersion}`));
+      this.logger.info(success(`${LOG_MESSAGES.PUBLISH_SUCCESS(tagVersion)}`));
     } catch (error) {
-      this.logger.error('❌ Git 推送失败', error);
+      this.logger.error(ERROR_MESSAGES.PUBLISH_FAILED, error);
       throw error;
     }
   }
@@ -371,25 +382,25 @@ export class GitFlow {
       // 从配置文件中读取仓库信息
       const loginPath = this.getConfigPath(GIT_CONFIG_FILES.LOGIN);
       const loginConfig = await this.readConfig(loginPath);
-      
-      if (!loginConfig?.['owner']) {
-        this.logger.warn('无法获取仓库所有者信息，跳过设置默认分支');
+
+      if (!loginConfig?.[CONFIG.OWNER_KEY]) {
+        this.logger.warn(LOG_MESSAGES.NO_OWNER_INFO);
         return;
       }
 
       // 获取仓库名称（假设当前目录名就是仓库名）
-      const repoName = process.cwd().split('/').pop() || '';
+      const repoName = process.cwd().split(CONFIG.PATH_SEPARATOR).pop() || '';
       if (!repoName) {
-        this.logger.warn('无法获取仓库名称，跳过设置默认分支');
+        this.logger.warn(LOG_MESSAGES.NO_REPO_NAME);
         return;
       }
 
       // 更新默认分支
-      await this.platform.updateDefaultBranch(loginConfig['owner'], repoName, this.branchManager.getMainBranch());
-      this.logger.info(`✓ 已设置 ${this.branchManager.getMainBranch()} 为默认分支`);
+      await this.platform.updateDefaultBranch(loginConfig[CONFIG.OWNER_KEY], repoName, this.branchManager.getMainBranch());
+      this.logger.info(`${LOG_MESSAGES.DEFAULT_BRANCH_SET} ${this.branchManager.getMainBranch()} ${LOG_MESSAGES.AS_DEFAULT_BRANCH}`);
     } catch (error) {
       // 不抛出错误，只记录警告
-      this.logger.warn(`设置默认分支失败: ${error}`);
+      this.logger.warn(`${ERROR_MESSAGES.DEFAULT_BRANCH_FAILED}: ${error}`);
     }
   }
 
@@ -401,7 +412,7 @@ export class GitFlow {
     repoOptions: RepoInitOptions,
     commitOptions: CommitOptions
   ): Promise<void> {
-    this.logger.info('🚀 开始完整 GitFlow 工作流...');
+    this.logger.info(LOG_MESSAGES.FULL_FLOW_START);
 
     try {
       // 阶段1: 仓库初始化
@@ -410,9 +421,9 @@ export class GitFlow {
       // 阶段2: Git 初始化
       await this.initGit(repoInfo.cloneUrl); // 使用 HTTPS URL
 
-      this.logger.info(success(`✅ Git 仓库初始化成功: ${repoInfo.url}`));
+      this.logger.info(success(`${LOG_MESSAGES.GIT_REPO_INIT_SUCCESS}: ${repoInfo.url}`));
     } catch (error) {
-      this.logger.error('❌ GitFlow 工作流失败', error);
+      this.logger.error(ERROR_MESSAGES.GITFLOW_FAILED, error);
       throw error;
     }
   }
