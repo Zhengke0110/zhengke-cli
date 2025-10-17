@@ -1,6 +1,6 @@
 {
   "name": "@zhengke0110/utils",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
