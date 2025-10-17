@@ -245,6 +245,19 @@ export class GitClient {
   }
 
   /**
+   * 获取远程仓库信息
+   */
+  async fetch(remote: string = GIT_DEFAULTS.REMOTE_NAME): Promise<void> {
+    try {
+      await this.git.fetch(remote);
+      this.logger.info(success(`获取远程仓库信息成功: ${remote}`));
+    } catch (error) {
+      this.logger.error('获取远程仓库信息失败', error);
+      throw error;
+    }
+  }
+
+  /**
    * 推送到远程分支
    */
   async push(remote: string = GIT_DEFAULTS.REMOTE_NAME, branch?: string, options: string[] = []): Promise<void> {

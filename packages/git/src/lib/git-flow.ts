@@ -198,13 +198,72 @@ export class GitFlow {
       if (hasChanges) {
         this.logger.info(LOG_MESSAGES.UNCOMMITTED_CODE);
 
-        // 5. 如果有代码变更，创建初始提交并推送到main分支
-        await this.gitClient.add(GIT_OPERATIONS.ADD_ALL);
-        await this.gitClient.commit(COMMIT_MESSAGES.INITIAL);
+        // 5. 尝试拉取远程主分支（如果远程仓库已有内容）
+        try {
+          this.logger.info('🔄 尝试拉取远程主分支...');
+          const mainBranch = this.branchManager.getMainBranch();
 
-        // 6. 推送main分支，确保它成为默认分支
-        await this.remoteManager.push(this.branchManager.getMainBranch());
-        this.logger.info(LOG_MESSAGES.INITIAL_COMMIT_PUSHED);
+          // 先 fetch 远程分支信息
+          await this.gitClient.fetch(CONFIG.DEFAULT_REMOTE);
+
+          // 检查远程分支是否存在
+          const branches = await this.gitClient.getBranches();
+          // 远程分支格式是 remotes/origin/main，需要提取分支名
+          const remoteBranches = branches.remote
+            .map(b => b.replace(/^remotes\//, '').replace(new RegExp(`^${CONFIG.DEFAULT_REMOTE}/`), ''));
+
+          this.logger.info(`🔍 检测到远程分支: ${remoteBranches.join(', ')}`);
+
+          if (remoteBranches.includes(mainBranch) || remoteBranches.includes('master')) {
+            // 远程主分支存在，拉取它
+            const targetBranch = remoteBranches.includes(mainBranch) ? mainBranch : 'master';
+
+            this.logger.info(`📥 远程仓库已有内容，拉取 ${targetBranch} 分支...`);
+
+            // 切换到主分支并拉取
+            try {
+              await this.gitClient.checkout(targetBranch);
+            } catch {
+              // 如果本地没有该分支，从远程创建
+              await this.gitClient.checkoutFromRemote(targetBranch, `${CONFIG.DEFAULT_REMOTE}/${targetBranch}`);
+            }
+
+            await this.remoteManager.pull(targetBranch);
+            this.logger.info(success(`✅ 已拉取远程${targetBranch}分支`));
+          } else {
+            // 远程仓库为空，创建初始提交并推送
+            this.logger.info('📝 远程仓库为空，创建初始提交...');
+            await this.createInitialCommit();
+          }
+        } catch (error) {
+          // 如果拉取失败（可能是远程仓库为空），创建初始提交
+          this.logger.warn(`⚠️  拉取远程分支失败: ${error instanceof Error ? error.message : String(error)}`);
+          this.logger.info('📝 创建初始提交并推送...');
+          await this.createInitialCommit();
+        }
+      } else {
+        // 没有未提交的代码，尝试拉取远程分支
+        this.logger.info('📂 当前无本地变更，尝试同步远程仓库...');
+        try {
+          await this.gitClient.fetch(CONFIG.DEFAULT_REMOTE);
+          const mainBranch = this.branchManager.getMainBranch();
+          const branches = await this.gitClient.getBranches();
+          const remoteBranches = branches.remote
+            .map(b => b.replace(/^remotes\//, '').replace(new RegExp(`^${CONFIG.DEFAULT_REMOTE}/`), ''));
+
+          if (remoteBranches.includes(mainBranch) || remoteBranches.includes('master')) {
+            const targetBranch = remoteBranches.includes(mainBranch) ? mainBranch : 'master';
+            try {
+              await this.gitClient.checkout(targetBranch);
+            } catch {
+              await this.gitClient.checkoutFromRemote(targetBranch, `${CONFIG.DEFAULT_REMOTE}/${targetBranch}`);
+            }
+            await this.remoteManager.pull(targetBranch);
+            this.logger.info(success(`✅ 已拉取远程${targetBranch}分支`));
+          }
+        } catch (error) {
+          this.logger.info('ℹ️  远程仓库为空，准备就绪');
+        }
       }
 
       this.logger.info(success(LOG_MESSAGES.GIT_INIT_SUCCESS));
@@ -212,6 +271,22 @@ export class GitFlow {
       this.logger.error('❌ Git 初始化失败', error);
       throw error;
     }
+  }
+
+  /**
+   * 创建初始提交并推送到主分支
+   */
+  private async createInitialCommit(): Promise<void> {
+    // 添加所有文件
+    await this.gitClient.add(GIT_OPERATIONS.ADD_ALL);
+
+    // 创建初始提交
+    await this.gitClient.commit(COMMIT_MESSAGES.INITIAL);
+
+    // 推送到主分支
+    await this.remoteManager.push(this.branchManager.getMainBranch());
+
+    this.logger.info(LOG_MESSAGES.INITIAL_COMMIT_PUSHED);
   }
 
   /**
