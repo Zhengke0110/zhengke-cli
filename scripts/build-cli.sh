@@ -5,11 +5,11 @@
 set -e
 
 echo "🔨 Building all packages..."
-npx nx run-many -t build --projects=utils,command,github,cli
+npx nx run-many -t build --projects=utils,command,github,git,cli
 
 echo "🔗 Updating workspace symlinks to point to dist..."
 # 自动处理所有 @zhengke0110 包
-for pkg in utils command github cli; do
+for pkg in utils command git github cli; do
   if [ -L "node_modules/@zhengke0110/$pkg" ] || [ -e "node_modules/@zhengke0110/$pkg" ]; then
     rm -f "node_modules/@zhengke0110/$pkg"
   fi
