@@ -17,20 +17,27 @@
 # 安装
 npm install -g @zhengke0110/cli
 
-# 初始化项目
-zhengke-cli init --name my-app
+# 初始化项目（多种方式）
+zhengke-cli init my-app                    # 推荐用法
+zhengke-cli init --name my-app             # 向后兼容
+zhengke-cli init                           # 交互式输入
 
 # 使用指定模板
-zhengke-cli init --name my-app --template react-ts
+zhengke-cli init my-app --template react-ts
 
 # 从 GitHub 搜索模板
-zhengke-cli init --name my-app --github
+zhengke-cli init my-app --github
 
 # Git 工作流
-zhengke-cli git:init    # 初始化 Git 仓库
-zhengke-cli git:commit  # 提交代码
-zhengke-cli git:publish # 发布到主分支
+zhengke-cli git:init                       # 初始化 Git 仓库
+zhengke-cli git:commit -m "feat: feature"  # 提交代码（不涉及版本号）
+zhengke-cli git:publish --type patch      # 发布版本（此时确定版本号）
 ```
+
+## Git 工作流特点
+
+- **commit**: 专注代码提交，支持多次迭代
+- **publish**: 确定版本号并发布，支持 major/minor/patch
 
 ## 项目架构
 
@@ -57,7 +64,7 @@ npm install
 npm run build
 
 # 本地测试
-node dist/packages/cli/src/index.js init --name test-app
+node dist/packages/cli/src/index.js init my-test
 
 # 发布版本
 npm run release:patch
