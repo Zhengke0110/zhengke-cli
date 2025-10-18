@@ -1,6 +1,6 @@
 {
   "name": "@zhengke0110/git",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "type": "module",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -12,8 +12,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@zhengke0110/utils": "3.0.1",
-    "@zhengke0110/github": "3.0.1",
+    "@zhengke0110/utils": "3.0.2",
+    "@zhengke0110/github": "3.0.2",
     "@octokit/rest": "^21.0.2",
     "axios": "^1.7.9",
     "simple-git": "^3.27.0",
