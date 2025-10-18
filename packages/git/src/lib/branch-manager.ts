@@ -80,7 +80,7 @@ export class BranchManager {
    */
   async createDevelopBranch(branchName?: string, version?: string): Promise<string> {
     let fullBranchName: string;
-    
+
     if (version) {
       // 如果有版本号，使用 develop/version 格式
       fullBranchName = `${this.developBranch}/${version}`;
@@ -94,7 +94,7 @@ export class BranchManager {
 
     // 检查分支是否已存在
     const exists = await this.branchExists(fullBranchName);
-    
+
     if (exists) {
       this.logger.info(`开发分支 ${fullBranchName} 已存在，切换到该分支`);
       await this.gitClient.checkout(fullBranchName);
@@ -209,8 +209,8 @@ export class BranchManager {
         await this.gitClient.deleteRemoteBranch(branchName);
       } catch (error) {
         const errorMessage = error?.toString() || '';
-        if (errorMessage.includes('refusing to delete the current branch') || 
-            errorMessage.includes('remote rejected')) {
+        if (errorMessage.includes('refusing to delete the current branch') ||
+          errorMessage.includes('remote rejected')) {
           this.logger.warn(`⚠️ 无法删除远程分支 ${branchName}`);
           this.logger.warn(`   原因：该分支可能是仓库的默认分支`);
           this.logger.warn(`   建议：请在 GitHub/Gitee 网站上手动将默认分支设置为 main，然后删除 ${branchName}`);

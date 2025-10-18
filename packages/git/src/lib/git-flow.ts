@@ -473,10 +473,10 @@ export class GitFlow {
       try {
         const remotes = await this.gitClient.getRemotes();
         const originRemote = remotes.find(r => r.name === CONFIG.DEFAULT_REMOTE);
-        
+
         if (originRemote) {
           const remoteUrl = originRemote.refs.fetch;
-          
+
           // 支持多种 URL 格式:
           // - https://github.com/owner/repo.git
           // - git@github.com:owner/repo.git

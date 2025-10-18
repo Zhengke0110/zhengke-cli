@@ -49,7 +49,7 @@ export interface GitPublishOptions {
  */
 async function createPlatformClient(platform?: string, token?: string): Promise<IGitPlatformClient> {
   const configManager = new ConfigManager();
-  
+
   // 1. 选择平台
   const selectedPlatform = platform || (await inquirer.prompt([{
     type: 'list',
@@ -63,11 +63,11 @@ async function createPlatformClient(platform?: string, token?: string): Promise<
 
   // 2. 获取 Token - 首先尝试从配置文件读取
   let platformToken = token;
-  
+
   if (!platformToken && selectedPlatform === GitPlatform.GITHUB) {
     platformToken = configManager.getGitHubToken();
   }
-  
+
   if (!platformToken) {
     platformToken = (await inquirer.prompt([{
       type: 'password',

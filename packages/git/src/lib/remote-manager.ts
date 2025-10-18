@@ -80,7 +80,7 @@ export class RemoteManager {
   async addRemoteIfNotExists(url: string): Promise<void> {
     // 先检查是否是 Git 仓库
     const isRepo = await this.gitClient.isRepo();
-    
+
     if (!isRepo) {
       this.logger.warn('当前目录不是 Git 仓库，跳过添加远程地址');
       return;
