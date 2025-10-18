@@ -44,6 +44,34 @@ export interface RepoInfo {
 }
 
 /**
+ * Release 信息
+ */
+export interface ReleaseInfo {
+  id: number;
+  tagName: string;
+  name: string;
+  body: string;
+  htmlUrl: string;
+  publishedAt: string;
+  draft: boolean;
+  prerelease: boolean;
+}
+
+/**
+ * 创建 Release 选项
+ */
+export interface CreateReleaseOptions {
+  tagName: string;
+  targetCommitish?: string;
+  name: string;
+  body?: string;
+  draft?: boolean;
+  prerelease?: boolean;
+  generateReleaseNotes?: boolean;
+  previousTagName?: string;
+}
+
+/**
  * 创建仓库的选项
  */
 export interface CreateRepoOptions {
@@ -118,6 +146,21 @@ export interface IGitPlatformClient {
    * 更新仓库的默认分支
    */
   updateDefaultBranch(owner: string, repo: string, defaultBranch: string): Promise<void>;
+
+  /**
+   * 创建 Release
+   */
+  createRelease(owner: string, repo: string, options: CreateReleaseOptions): Promise<ReleaseInfo>;
+
+  /**
+   * 获取最新 Release
+   */
+  getLatestRelease(owner: string, repo: string): Promise<ReleaseInfo | null>;
+
+  /**
+   * 检查 Release 是否存在
+   */
+  releaseExists(owner: string, repo: string, tagName: string): Promise<boolean>;
 }
 
 /**

@@ -1,4 +1,4 @@
-export { GitHubClient } from './lib/github-client.js';
+export { GitHubClient, type ReleaseInfo, type CreateReleaseOptions } from './lib/github-client.js';
 export {
     TemplateSearcher,
     type GitHubTemplate,

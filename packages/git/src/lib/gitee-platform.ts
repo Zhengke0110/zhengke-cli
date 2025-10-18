@@ -11,6 +11,8 @@ import {
   RepoInfo,
   CreateRepoOptions,
   GitPlatformConfig,
+  ReleaseInfo,
+  CreateReleaseOptions,
 } from './git-platform.js';
 import { createLogger, success, type Logger } from '@zhengke0110/utils';
 
@@ -206,6 +208,93 @@ export class GiteePlatform implements IGitPlatformClient {
       });
     } catch (error) {
       throw new Error(`更新默认分支失败: ${error}`);
+    }
+  }
+
+  /**
+   * 创建 Release (Gitee 不完全支持 GitHub 风格的 Release，这里提供基本实现)
+   */
+  async createRelease(
+    owner: string,
+    repo: string,
+    options: CreateReleaseOptions
+  ): Promise<ReleaseInfo> {
+    try {
+      // Gitee 的 Release API 与 GitHub 不同
+      const { data } = await this.client.post(
+        `/repos/${owner}/${repo}/releases`,
+        {
+          tag_name: options.tagName,
+          name: options.name,
+          body: options.body || '',
+          prerelease: options.prerelease || false,
+          target_commitish: options.targetCommitish || 'master',
+        },
+        {
+          params: { access_token: this.token },
+        }
+      );
+
+      this.logger.info(success(`Gitee Release 创建成功`));
+
+      return {
+        id: data.id,
+        tagName: data.tag_name,
+        name: data.name || '',
+        body: data.body || '',
+        htmlUrl: `https://gitee.com/${owner}/${repo}/releases/${data.tag_name}`,
+        publishedAt: data.created_at || '',
+        draft: false, // Gitee 不支持草稿
+        prerelease: data.prerelease || false,
+      };
+    } catch (error: any) {
+      this.logger.error('创建 Gitee Release 失败', error);
+      throw new Error(`创建 Gitee Release 失败: ${error.message || 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * 获取最新的 Release
+   */
+  async getLatestRelease(owner: string, repo: string): Promise<ReleaseInfo | null> {
+    try {
+      const { data } = await this.client.get(`/repos/${owner}/${repo}/releases/latest`, {
+        params: { access_token: this.token },
+      });
+
+      return {
+        id: data.id,
+        tagName: data.tag_name,
+        name: data.name || '',
+        body: data.body || '',
+        htmlUrl: `https://gitee.com/${owner}/${repo}/releases/${data.tag_name}`,
+        publishedAt: data.created_at || '',
+        draft: false,
+        prerelease: data.prerelease || false,
+      };
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      this.logger.error('获取最新 Release 失败', error);
+      throw new Error(`获取最新 Release 失败: ${error.message || 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * 检查 Release 是否存在
+   */
+  async releaseExists(owner: string, repo: string, tagName: string): Promise<boolean> {
+    try {
+      await this.client.get(`/repos/${owner}/${repo}/releases/tags/${tagName}`, {
+        params: { access_token: this.token },
+      });
+      return true;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return false;
+      }
+      throw error;
     }
   }
 

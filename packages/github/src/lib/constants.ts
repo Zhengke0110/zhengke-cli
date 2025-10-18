@@ -78,13 +78,15 @@ export const GitHubErrorMessages = {
     GET_AUTHENTICATED_USER_FAILED: 'Failed to get authenticated user. Please check your GitHub token.',
     DOWNLOAD_TEMPLATE_FAILED: (error: string) => `Failed to download template: ${error}`,
     TARGET_DIR_EXISTS: (dir: string) => `Target directory ${dir} already exists. Use force option to overwrite.`,
+    CREATE_RELEASE_FAILED: (error: string) => `Failed to create GitHub release: ${error}`,
+    GET_LATEST_RELEASE_FAILED: (error: string) => `Failed to get latest release: ${error}`,
 } as const;
 
 /**
  * Git 命令模板
  */
 export const GitCommands = {
-    CLONE_SHALLOW: (url: string, targetDir: string) => 
+    CLONE_SHALLOW: (url: string, targetDir: string) =>
         `git clone --depth ${GitConstants.CLONE_DEPTH} ${url} "${targetDir}"`,
 } as const;
 

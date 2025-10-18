@@ -251,3 +251,83 @@ pnpm-debug.log*
 .temp/
 .tmp/
 `;
+
+// .github/release.yml 默认模板
+export const RELEASE_YML_TEMPLATE = `# GitHub Release Notes 自动生成配置
+# https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
+
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - duplicate
+      - invalid
+      - wontfix
+    authors:
+      - dependabot
+
+  categories:
+    - title: 💥 Breaking Changes
+      labels:
+        - breaking
+        - breaking-change
+        - semver-major
+
+    - title: ✨ New Features
+      labels:
+        - feat
+        - feature
+        - enhancement
+        - semver-minor
+
+    - title: 🐛 Bug Fixes
+      labels:
+        - fix
+        - bug
+        - bugfix
+        - semver-patch
+
+    - title: 📚 Documentation
+      labels:
+        - docs
+        - documentation
+
+    - title: 🔧 Chores & Maintenance
+      labels:
+        - chore
+        - refactor
+        - style
+        - test
+        - ci
+
+    - title: 📦 Dependencies
+      labels:
+        - dependencies
+        - deps
+
+    - title: Other Changes
+      labels:
+        - "*"
+`;
+
+// Release 相关配置
+export const RELEASE_CONFIG = {
+  ENABLED: true,
+  AUTO_GENERATE_NOTES: true,
+  USE_CUSTOM_BODY: true, // 使用自定义 Release Body（基于提交记录）
+  CREATE_DISCUSSION: false,
+  SKIP_ON_ERROR: true, // Release 创建失败不中断发布流程
+  RETRY_COUNT: 3,
+  RETRY_DELAY: 1000, // 毫秒
+  PRERELEASE_PATTERN: /-(alpha|beta|rc|pre)/i,
+} as const;
+
+// Release 消息模板
+export const RELEASE_MESSAGES = {
+  CREATING: '正在创建 GitHub Release...',
+  SUCCESS: (url: string) => `GitHub Release 创建成功: ${url}`,
+  FAILED: (error: string) => `创建 GitHub Release 失败: ${error}`,
+  SKIPPED: 'GitHub Release 创建失败，但不影响发布流程',
+  CHECKING: '检查 Release 配置...',
+  NO_CONFIG: '未找到 .github/release.yml 配置文件，将使用 GitHub 默认配置',
+} as const;

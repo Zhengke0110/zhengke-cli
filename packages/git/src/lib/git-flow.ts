@@ -19,7 +19,10 @@ import {
   LOG_MESSAGES,
   GIT_OPERATIONS,
   ERROR_MESSAGES,
-  GITIGNORE_TEMPLATE
+  GITIGNORE_TEMPLATE,
+  RELEASE_CONFIG,
+  RELEASE_MESSAGES,
+  RELEASE_YML_TEMPLATE
 } from './constants.js';
 import { createLogger, success, type Logger } from '@zhengke0110/utils';
 import * as path from 'path';
@@ -170,6 +173,9 @@ export class GitFlow {
       // 5. 创建 .gitignore 文件（如果不存在）
       await this.createGitignoreIfNotExists();
 
+      // 6. 创建 .github/release.yml 文件（如果不存在）
+      await this.createReleaseYmlIfNotExists();
+
       this.logger.info(success('✅ 仓库初始化完成'));
       return repoInfo;
     } catch (error) {
@@ -299,6 +305,30 @@ export class GitFlow {
       // 文件不存在，创建它
       await fs.promises.writeFile(gitignorePath, GITIGNORE_TEMPLATE, 'utf-8');
       this.logger.info(success(LOG_MESSAGES.GITIGNORE_CREATED));
+    }
+  }
+
+  /**
+   * 创建 .github/release.yml 文件（如果不存在）
+   */
+  private async createReleaseYmlIfNotExists(): Promise<void> {
+    const githubDir = path.join(this.workDir, '.github');
+    const releaseYmlPath = path.join(githubDir, 'release.yml');
+
+    try {
+      // 检查 .github/release.yml 文件是否已存在
+      await fs.promises.access(releaseYmlPath);
+      this.logger.info('📋 .github/release.yml 文件已存在');
+    } catch {
+      // 文件不存在，创建 .github 目录和文件
+      try {
+        await fs.promises.mkdir(githubDir, { recursive: true });
+      } catch (error) {
+        // 目录可能已存在，忽略错误
+      }
+
+      await fs.promises.writeFile(releaseYmlPath, RELEASE_YML_TEMPLATE, 'utf-8');
+      this.logger.info(success('✅ .github/release.yml 文件已创建'));
     }
   }
 
@@ -435,7 +465,12 @@ export class GitFlow {
       // 6. 推送主分支
       await this.remoteManager.push(this.branchManager.getMainBranch());
 
-      // 7. 确保main分支成为默认分支（在删除开发分支之前）
+      // 7. 创建 GitHub Release
+      if (RELEASE_CONFIG.ENABLED) {
+        await this.createGitHubRelease(formattedVersion);
+      }
+
+      // 8. 确保main分支成为默认分支（在删除开发分支之前）
       try {
         await this.ensureMainAsDefaultBranch();
         // 等待几秒让 GitHub 处理默认分支的更改
@@ -444,7 +479,7 @@ export class GitFlow {
         this.logger.warn('设置默认分支时出现警告:', error);
       }
 
-      // 8. 删除本地和远程开发分支
+      // 9. 删除本地和远程开发分支
       await this.branchManager.deleteBranch(developBranch, { local: true, remote: true });
 
       this.logger.info(success(`${LOG_MESSAGES.PUBLISH_SUCCESS(formattedVersion)}`));
@@ -452,6 +487,192 @@ export class GitFlow {
       this.logger.error(ERROR_MESSAGES.PUBLISH_FAILED, error);
       throw error;
     }
+  }
+
+  /**
+   * 创建 GitHub Release
+   */
+  private async createGitHubRelease(version: string): Promise<void> {
+    try {
+      this.logger.info(RELEASE_MESSAGES.CREATING);
+
+      // 获取仓库信息
+      const { owner, repo } = await this.getRepoInfo();
+
+      // 检查是否为预发布版本
+      const isPrerelease = RELEASE_CONFIG.PRERELEASE_PATTERN.test(version);
+
+      // 获取上一个版本（用于生成对比）
+      let previousTagName: string | undefined;
+      try {
+        const latestRelease = await this.platform.getLatestRelease(owner, repo);
+        if (latestRelease) {
+          previousTagName = latestRelease.tagName;
+        }
+      } catch (error) {
+        // 如果获取失败，忽略（可能是第一次发布）
+      }
+
+      // 生成自定义的 Release Body
+      let customBody = '';
+      if (RELEASE_CONFIG.USE_CUSTOM_BODY) {
+        customBody = await this.generateReleaseBody(version, previousTagName);
+      }
+
+      // 创建 Release
+      const release = await this.platform.createRelease(owner, repo, {
+        tagName: version,
+        targetCommitish: this.branchManager.getMainBranch(),
+        name: `Release ${version}`,
+        body: customBody, // 如果为空，GitHub 将自动生成
+        draft: false,
+        prerelease: isPrerelease,
+        generateReleaseNotes: customBody ? false : RELEASE_CONFIG.AUTO_GENERATE_NOTES, // 如果有自定义内容，不使用自动生成
+        previousTagName,
+      });
+
+      this.logger.info(success(RELEASE_MESSAGES.SUCCESS(release.htmlUrl)));
+    } catch (error: any) {
+      if (RELEASE_CONFIG.SKIP_ON_ERROR) {
+        this.logger.warn(RELEASE_MESSAGES.FAILED(error.message || 'Unknown error'));
+        this.logger.warn(RELEASE_MESSAGES.SKIPPED);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * 生成 Release Body 内容
+   */
+  private async generateReleaseBody(currentVersion: string, previousVersion?: string): Promise<string> {
+    try {
+      // 获取两个版本之间的提交记录
+      const git = this.gitClient.getRawGit();
+      let log;
+
+      if (previousVersion) {
+        log = await git.log({ from: previousVersion, to: currentVersion });
+      } else {
+        // 如果没有上一个版本，获取当前标签的提交
+        log = await git.log({ to: currentVersion });
+      }
+
+      if (!log || log.total === 0) {
+        return ''; // 返回空字符串，让 GitHub 自动生成
+      }
+
+      // 按照 Conventional Commits 规范分类提交
+      const features: string[] = [];
+      const fixes: string[] = [];
+      const docs: string[] = [];
+      const chores: string[] = [];
+      const breaking: string[] = [];
+      const others: string[] = [];
+
+      log.all.forEach((commit: any) => {
+        const message = commit.message.split('\n')[0]; // 只取第一行
+        const hash = commit.hash.substring(0, 7); // 短哈希
+
+        // 检查是否有 BREAKING CHANGE
+        if (commit.body && commit.body.includes('BREAKING CHANGE')) {
+          breaking.push(`- ${message} (${hash})`);
+        } else if (message.startsWith('feat:') || message.startsWith('feat(')) {
+          features.push(`- ${message.replace(/^feat(\([^)]*\))?:\s*/, '')} (${hash})`);
+        } else if (message.startsWith('fix:') || message.startsWith('fix(')) {
+          fixes.push(`- ${message.replace(/^fix(\([^)]*\))?:\s*/, '')} (${hash})`);
+        } else if (message.startsWith('docs:') || message.startsWith('docs(')) {
+          docs.push(`- ${message.replace(/^docs(\([^)]*\))?:\s*/, '')} (${hash})`);
+        } else if (message.startsWith('chore:') || message.startsWith('chore(')) {
+          chores.push(`- ${message.replace(/^chore(\([^)]*\))?:\s*/, '')} (${hash})`);
+        } else {
+          others.push(`- ${message} (${hash})`);
+        }
+      });
+
+      // 构建 Release Body
+      let body = '';
+
+      if (breaking.length > 0) {
+        body += '## 💥 Breaking Changes\n\n';
+        body += breaking.join('\n') + '\n\n';
+      }
+
+      if (features.length > 0) {
+        body += '## ✨ New Features\n\n';
+        body += features.join('\n') + '\n\n';
+      }
+
+      if (fixes.length > 0) {
+        body += '## 🐛 Bug Fixes\n\n';
+        body += fixes.join('\n') + '\n\n';
+      }
+
+      if (docs.length > 0) {
+        body += '## 📚 Documentation\n\n';
+        body += docs.join('\n') + '\n\n';
+      }
+
+      if (chores.length > 0) {
+        body += '## 🔧 Chores & Maintenance\n\n';
+        body += chores.join('\n') + '\n\n';
+      }
+
+      if (others.length > 0) {
+        body += '## Other Changes\n\n';
+        body += others.join('\n') + '\n\n';
+      }
+
+      // 添加完整变更日志链接
+      if (previousVersion) {
+        const repoInfo = await this.getRepoInfo();
+        body += `---\n\n`;
+        body += `**Full Changelog**: https://github.com/${repoInfo.owner}/${repoInfo.repo}/compare/${previousVersion}...${currentVersion}`;
+      }
+
+      return body.trim();
+    } catch (error) {
+      this.logger.warn('生成 Release Body 失败，将使用 GitHub 自动生成', error);
+      return ''; // 失败时返回空，让 GitHub 自动生成
+    }
+  }
+
+  /**
+   * 获取仓库信息（owner 和 repo name）
+   */
+  private async getRepoInfo(): Promise<{ owner: string; repo: string }> {
+    // 从配置文件中读取 owner
+    const loginPath = this.getConfigPath(GIT_CONFIG_FILES.LOGIN);
+    const loginConfig = await this.readConfig(loginPath);
+
+    if (!loginConfig?.[CONFIG.OWNER_KEY]) {
+      throw new Error('无法获取仓库所有者信息');
+    }
+
+    const owner = loginConfig[CONFIG.OWNER_KEY];
+
+    // 从远程 URL 解析仓库名称
+    const remotes = await this.gitClient.getRemotes();
+    const originRemote = remotes.find(r => r.name === CONFIG.DEFAULT_REMOTE);
+
+    if (!originRemote) {
+      throw new Error('无法找到 origin 远程仓库');
+    }
+
+    const remoteUrl = originRemote.refs.fetch;
+    const match = remoteUrl.match(/[:/]([^/]+\/([^/]+?))(\.git)?$/);
+
+    if (!match || !match[2]) {
+      // 备用方案：使用当前目录名
+      const repo = process.cwd().split(CONFIG.PATH_SEPARATOR).pop() || '';
+      if (!repo) {
+        throw new Error('无法解析仓库名称');
+      }
+      return { owner, repo };
+    }
+
+    const repo = match[2].replace('.git', '');
+    return { owner, repo };
   }
 
   /**
