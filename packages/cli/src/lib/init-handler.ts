@@ -55,16 +55,40 @@ function showNextSteps(projectName: string): void {
 export async function handleInit(options: InitOptions): Promise<void> {
     logger.debug(Messages.DEBUG.INIT_START);
 
-    // 1. 验证项目名称
-    if (!options.name) {
-        throw new ValidationError(
-            ValidationErrorType.PROJECT_NAME,
-            ValidationErrors.PROJECT_NAME_REQUIRED
-        );
+    // 1. 获取项目名称（如果未提供，则交互式输入）
+    let projectName = options.name;
+    
+    if (!projectName) {
+        const { name } = await inquirer.prompt<{ name: string }>([
+            {
+                type: 'input',
+                name: 'name',
+                message: Prompts.ENTER_PROJECT_NAME,
+                validate: (input: string) => {
+                    if (!input || input.trim() === '') {
+                        return ValidationErrors.PROJECT_NAME_REQUIRED;
+                    }
+                    // 验证项目名称格式（只允许字母、数字、连字符和下划线）
+                    if (!/^[a-zA-Z0-9_-]+$/.test(input.trim())) {
+                        return '项目名称只能包含字母、数字、连字符和下划线';
+                    }
+                    return true;
+                },
+            },
+        ]);
+        projectName = name.trim();
     }
 
-    const projectName = options.name;
     const projectPath = path.resolve(process.cwd(), projectName);
+
+    // 检查目录是否已存在
+    if (existsSync(projectPath)) {
+        logger.error(chalk.red(`\n错误：目录 "${projectName}" 已存在`));
+        throw new ValidationError(
+            ValidationErrorType.PROJECT_NAME,
+            `目录 "${projectName}" 已存在，请选择其他名称`
+        );
+    }
 
     logger.info(chalk.cyan(`\n${Messages.INFO.INITIALIZING}\n`));
 

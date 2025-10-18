@@ -65,17 +65,27 @@ const CommandFlags = {
 
 /**
  * init 命令定义
+ * 支持三种用法：
+ * 1. zhengke-cli init [项目名]            - 位置参数
+ * 2. zhengke-cli init --name 项目名       - 选项参数（向后兼容）
+ * 3. zhengke-cli init                     - 交互式输入
  */
 export const initCommand: CommandDefinition = {
-  name: 'init',
+  name: 'init [name]',
   description: CommandDescriptions.INIT,
   options: [
     { flags: CommandFlags.NAME, description: CommandDescriptions.OPTION_NAME },
     { flags: CommandFlags.TEMPLATE, description: CommandDescriptions.OPTION_TEMPLATE },
     { flags: CommandFlags.GITHUB, description: CommandDescriptions.OPTION_GITHUB },
   ],
-  action: wrapAsyncHandler(async (options: InitOptions) => {
-    await handleInit(options);
+  action: wrapAsyncHandler(async (name?: string, options?: InitOptions) => {
+    // 如果通过位置参数提供了 name，使用它
+    // 否则使用 options.name（如果通过 --name 提供）
+    const finalOptions: InitOptions = {
+      ...options,
+      name: name || options?.name,
+    };
+    await handleInit(finalOptions);
   }, { logger, debug: isDebugMode() }),
 };
 

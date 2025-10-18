@@ -141,6 +141,7 @@ export const Messages = {
  * Inquirer 提示消息
  */
 export const Prompts = {
+    ENTER_PROJECT_NAME: '请输入项目名称:',
     SELECT_TEMPLATE_SOURCE: '请选择模板来源:',
     SELECT_TEMPLATE: '选择一个模板:',
     ENTER_GITHUB_TOKEN: '请输入 GitHub Token:',
@@ -164,7 +165,7 @@ export enum ValidationErrorType {
  * 验证错误消息
  */
 export const ValidationErrors = {
-    PROJECT_NAME_REQUIRED: '项目名称不能为空，请使用 --name 参数指定',
+    PROJECT_NAME_REQUIRED: '项目名称不能为空',
     GITHUB_TOKEN_REQUIRED: '必须提供 GitHub Token 才能搜索您的仓库',
     GITHUB_TOKEN_INVALID: 'Token 验证失败',
     NO_TEMPLATES_FOUND: '没有找到符合条件的模板',
