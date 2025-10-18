@@ -67,6 +67,7 @@ export const API_ENDPOINTS = {
 export const COMMIT_MESSAGES = {
   INITIAL: 'chore: initial commit',
   RELEASE: 'chore: release',
+  DEFAULT: 'chore: update',
   INITIAL_COMMIT: 'chore: initial commit',
   RELEASE_COMMIT: (version: string) => `chore: release ${version}`,
   TAG_MESSAGE: (version: string) => `Release ${version}`,
@@ -128,6 +129,7 @@ export const LOG_MESSAGES = {
   // 提交相关
   COMMIT_START: '🚀 开始 Git 提交...',
   COMMIT_SUCCESS: (version: string) => `✅ Git 提交完成，版本: ${version}`,
+  COMMIT_SUCCESS_NO_VERSION: '✅ Git 提交成功',
   COMMIT_FAILED: '❌ Git 提交失败',
 
   // 发布相关

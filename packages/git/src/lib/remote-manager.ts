@@ -200,12 +200,24 @@ export class RemoteManager {
    */
   async syncMainBranch(mainBranch: string = GIT_DEFAULTS.MAIN_BRANCH): Promise<void> {
     try {
+      // 先检查远程主分支是否存在
+      await this.gitClient.fetch(this.remoteName);
+      const branches = await this.gitClient.getBranches();
+      const remoteBranches = branches.remote
+        .map(b => b.replace(/^remotes\//, '').replace(new RegExp(`^${this.remoteName}/`), ''));
+
+      if (!remoteBranches.includes(mainBranch)) {
+        this.logger.info(`远程主分支 ${mainBranch} 不存在，跳过同步（可能是首次提交）`);
+        return;
+      }
+
       await this.gitClient.checkout(mainBranch);
       await this.pull(mainBranch);
       this.logger.info(success(`主分支 ${mainBranch} 已同步`));
     } catch (error) {
-      this.logger.error('同步主分支失败', error);
-      throw error;
+      // 不要抛出错误，只记录警告，因为可能是首次提交
+      this.logger.warn(`同步主分支失败: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.info(`跳过同步，继续执行（可能是首次提交或远程分支不存在）`);
     }
   }
 

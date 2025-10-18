@@ -106,8 +106,6 @@ export const gitCommitCommand: CommandDefinition = {
   description: CommandDescriptions.GIT_COMMIT,
   options: [
     { flags: '-m, --message <message>', description: CommandDescriptions.OPTION_MESSAGE },
-    { flags: '--type <type>', description: CommandDescriptions.OPTION_VERSION_TYPE },
-    { flags: '-v, --version <version>', description: CommandDescriptions.OPTION_VERSION },
   ],
   action: wrapAsyncHandler(async (options: GitCommitOptions) => {
     await handleGitCommit(options);
@@ -121,6 +119,7 @@ export const gitPublishCommand: CommandDefinition = {
   name: 'git:publish',
   description: CommandDescriptions.GIT_PUBLISH,
   options: [
+    { flags: '--type <type>', description: CommandDescriptions.OPTION_VERSION_TYPE },
     { flags: '-v, --version <version>', description: CommandDescriptions.OPTION_VERSION },
   ],
   action: wrapAsyncHandler(async (options: GitPublishOptions) => {

@@ -34,14 +34,13 @@ export interface GitInitOptions {
  */
 export interface GitCommitOptions {
   message?: string;
-  type?: string;
-  version?: string;
 }
 
 /**
  * Git publish 命令选项
  */
 export interface GitPublishOptions {
+  type?: string;
   version?: string;
 }
 
@@ -170,6 +169,7 @@ export async function handleGitInit(options: GitInitOptions): Promise<void> {
 /**
  * 处理 git commit 命令
  * 对应 GitFlow 阶段3：提交
+ * 注意：此阶段不涉及版本号管理，仅提交代码到开发分支
  */
 export async function handleGitCommit(options: GitCommitOptions): Promise<void> {
   logger.info('🚀 开始 Git 提交...');
@@ -187,11 +187,42 @@ export async function handleGitCommit(options: GitCommitOptions): Promise<void> 
       default: 'chore: update',
     }])).message;
 
-    // 获取版本类型
+    // 阶段3: 提交（不涉及版本号）
+    const commitOptions: CommitOptions = {
+      message,
+    };
+
+    const branch = await gitFlow.commit(commitOptions);
+
+    logger.info(`✅ Git 提交成功，分支: ${branch}`);
+  } catch (error) {
+    logger.error('❌ Git 提交失败', error);
+    throw error;
+  }
+}
+
+/**
+ * 处理 git publish 命令
+ * 对应 GitFlow 阶段4：推送
+ * 注意：版本号在此阶段确定
+ */
+export async function handleGitPublish(options: GitPublishOptions): Promise<void> {
+  logger.info('🚀 开始 Git 发布...');
+
+  try {
+    // 创建平台客户端 - 优先使用GitHub和配置的token
+    const platform = await createPlatformClient(GitPlatform.GITHUB);
+    const gitFlow = new GitFlow(platform);
+
+    // 获取版本类型（如果没有指定版本号）
     let versionType: VersionType | undefined;
+    let version: string | undefined = options.version;
+
+    // 如果指定了 --type 参数，直接使用
     if (options.type) {
       versionType = options.type as VersionType;
-    } else if (!options.version) {
+    } else if (!version) {
+      // 如果没有指定版本号也没有指定类型，交互式询问
       const { type } = await inquirer.prompt([{
         type: 'list',
         name: 'type',
@@ -205,36 +236,8 @@ export async function handleGitCommit(options: GitCommitOptions): Promise<void> 
       versionType = type;
     }
 
-    // 阶段3: 提交
-    const commitOptions: CommitOptions = {
-      message,
-      versionType,
-      version: options.version,
-    };
-
-    const version = await gitFlow.commit(commitOptions);
-
-    logger.info(`✅ Git 提交成功，版本: ${version}`);
-  } catch (error) {
-    logger.error('❌ Git 提交失败', error);
-    throw error;
-  }
-}
-
-/**
- * 处理 git publish 命令
- * 对应 GitFlow 阶段4：推送
- */
-export async function handleGitPublish(options: GitPublishOptions): Promise<void> {
-  logger.info('🚀 开始 Git 发布...');
-
-  try {
-    // 创建平台客户端 - 优先使用GitHub和配置的token
-    const platform = await createPlatformClient(GitPlatform.GITHUB);
-    const gitFlow = new GitFlow(platform);
-
     // 阶段4: 发布
-    await gitFlow.publish(options.version);
+    await gitFlow.publish({ version, versionType });
 
     logger.info('✅ Git 发布成功');
   } catch (error) {
