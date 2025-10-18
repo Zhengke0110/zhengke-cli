@@ -13,7 +13,7 @@ import {
   type RepoInitOptions,
   type CommitOptions,
 } from '@zhengke0110/git';
-import { ConfigManager } from '@zhengke0110/utils';
+import { ConfigManager, success } from '@zhengke0110/utils';
 import { logger } from './logger.js';
 import inquirer from 'inquirer';
 
@@ -102,7 +102,7 @@ export async function handleGitInit(options: GitInitOptions): Promise<void> {
     }]);
 
     if (!confirm) {
-      logger.info('❌ 操作已取消');
+      logger.info('操作已取消');
       return;
     }
 
@@ -159,9 +159,9 @@ export async function handleGitInit(options: GitInitOptions): Promise<void> {
     // 阶段2: Git 初始化
     await gitFlow.initGit(repoInfo.cloneUrl);
 
-    logger.info(`✅ Git 仓库初始化成功: ${repoInfo.url}`);
+    logger.info(success(`Git 仓库初始化成功: ${repoInfo.url}`));
   } catch (error) {
-    logger.error('❌ Git 仓库初始化失败', error);
+    logger.error('Git 仓库初始化失败', error);
     throw error;
   }
 }
@@ -194,9 +194,9 @@ export async function handleGitCommit(options: GitCommitOptions): Promise<void> 
 
     const branch = await gitFlow.commit(commitOptions);
 
-    logger.info(`✅ Git 提交成功，分支: ${branch}`);
+    logger.info(success(`Git 提交成功，分支: ${branch}`));
   } catch (error) {
-    logger.error('❌ Git 提交失败', error);
+    logger.error('Git 提交失败', error);
     throw error;
   }
 }
@@ -239,9 +239,9 @@ export async function handleGitPublish(options: GitPublishOptions): Promise<void
     // 阶段4: 发布
     await gitFlow.publish({ version, versionType });
 
-    logger.info('✅ Git 发布成功');
+    logger.info(success('Git 发布成功'));
   } catch (error) {
-    logger.error('❌ Git 发布失败', error);
+    logger.error('Git 发布失败', error);
     throw error;
   }
 }
