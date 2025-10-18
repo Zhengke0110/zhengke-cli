@@ -315,6 +315,10 @@ export const RELEASE_CONFIG = {
   ENABLED: true,
   AUTO_GENERATE_NOTES: true,
   USE_CUSTOM_BODY: true, // 使用自定义 Release Body（基于提交记录）
+  STRICT_CONVENTIONAL_COMMITS: false, // 严格模式：只识别符合 Conventional Commits 规范的提交
+  SMART_CATEGORIZATION: true, // 智能分类：对不规范提交尝试关键词匹配
+  FALLBACK_TO_AUTO: true, // 如果没有符合规范的提交，回退到 GitHub 自动生成
+  MIN_COMMITS_FOR_CUSTOM: 1, // 至少需要多少个符合规范的提交才使用自定义格式
   CREATE_DISCUSSION: false,
   SKIP_ON_ERROR: true, // Release 创建失败不中断发布流程
   RETRY_COUNT: 3,
@@ -330,4 +334,15 @@ export const RELEASE_MESSAGES = {
   SKIPPED: 'GitHub Release 创建失败，但不影响发布流程',
   CHECKING: '检查 Release 配置...',
   NO_CONFIG: '未找到 .github/release.yml 配置文件，将使用 GitHub 默认配置',
+  FALLBACK: '未检测到符合规范的提交，使用 GitHub 自动生成 Release Notes',
+  USING_SMART: '检测到不规范的提交，使用智能分类功能',
+} as const;
+
+// 智能分类关键词映射
+export const SMART_CATEGORIZATION_KEYWORDS = {
+  FEATURES: ['add', 'new', 'feature', 'implement', 'create', '新增', '添加', '功能'],
+  FIXES: ['fix', 'bug', 'resolve', 'patch', 'correct', '修复', '修正', '解决'],
+  DOCS: ['doc', 'readme', 'documentation', 'comment', '文档', '注释'],
+  CHORES: ['chore', 'refactor', 'style', 'test', 'build', 'ci', 'update', '优化', '重构', '更新'],
+  BREAKING: ['breaking', 'major', 'incompatible', '破坏性', '不兼容'],
 } as const;

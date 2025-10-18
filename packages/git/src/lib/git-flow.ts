@@ -22,7 +22,8 @@ import {
   GITIGNORE_TEMPLATE,
   RELEASE_CONFIG,
   RELEASE_MESSAGES,
-  RELEASE_YML_TEMPLATE
+  RELEASE_YML_TEMPLATE,
+  SMART_CATEGORIZATION_KEYWORDS
 } from './constants.js';
 import { createLogger, success, type Logger } from '@zhengke0110/utils';
 import * as path from 'path';
@@ -570,25 +571,88 @@ export class GitFlow {
       const breaking: string[] = [];
       const others: string[] = [];
 
+      // 统计符合规范的提交数量
+      let conventionalCommitCount = 0;
+
       log.all.forEach((commit: any) => {
         const message = commit.message.split('\n')[0]; // 只取第一行
         const hash = commit.hash.substring(0, 7); // 短哈希
+        let isConventional = false;
 
         // 检查是否有 BREAKING CHANGE
         if (commit.body && commit.body.includes('BREAKING CHANGE')) {
           breaking.push(`- ${message} (${hash})`);
+          isConventional = true;
         } else if (message.startsWith('feat:') || message.startsWith('feat(')) {
           features.push(`- ${message.replace(/^feat(\([^)]*\))?:\s*/, '')} (${hash})`);
+          isConventional = true;
         } else if (message.startsWith('fix:') || message.startsWith('fix(')) {
           fixes.push(`- ${message.replace(/^fix(\([^)]*\))?:\s*/, '')} (${hash})`);
+          isConventional = true;
         } else if (message.startsWith('docs:') || message.startsWith('docs(')) {
           docs.push(`- ${message.replace(/^docs(\([^)]*\))?:\s*/, '')} (${hash})`);
+          isConventional = true;
         } else if (message.startsWith('chore:') || message.startsWith('chore(')) {
           chores.push(`- ${message.replace(/^chore(\([^)]*\))?:\s*/, '')} (${hash})`);
+          isConventional = true;
         } else {
-          others.push(`- ${message} (${hash})`);
+          // 不符合规范的提交
+          if (RELEASE_CONFIG.SMART_CATEGORIZATION) {
+            // 智能分类：基于关键词匹配
+            const lowerMessage = message.toLowerCase();
+            let categorized = false;
+
+            // 检查 Breaking Changes 关键词
+            if (SMART_CATEGORIZATION_KEYWORDS.BREAKING.some(keyword => lowerMessage.includes(keyword))) {
+              breaking.push(`- ${message} (${hash}) 🤖`);
+              categorized = true;
+            }
+            // 检查 Feature 关键词
+            else if (SMART_CATEGORIZATION_KEYWORDS.FEATURES.some(keyword => lowerMessage.includes(keyword))) {
+              features.push(`- ${message} (${hash}) 🤖`);
+              categorized = true;
+            }
+            // 检查 Fix 关键词
+            else if (SMART_CATEGORIZATION_KEYWORDS.FIXES.some(keyword => lowerMessage.includes(keyword))) {
+              fixes.push(`- ${message} (${hash}) 🤖`);
+              categorized = true;
+            }
+            // 检查 Docs 关键词
+            else if (SMART_CATEGORIZATION_KEYWORDS.DOCS.some(keyword => lowerMessage.includes(keyword))) {
+              docs.push(`- ${message} (${hash}) 🤖`);
+              categorized = true;
+            }
+            // 检查 Chores 关键词
+            else if (SMART_CATEGORIZATION_KEYWORDS.CHORES.some(keyword => lowerMessage.includes(keyword))) {
+              chores.push(`- ${message} (${hash}) 🤖`);
+              categorized = true;
+            }
+
+            if (!categorized) {
+              others.push(`- ${message} (${hash})`);
+            }
+          } else {
+            // 不使用智能分类，直接放入 others
+            others.push(`- ${message} (${hash})`);
+          }
+        }
+
+        if (isConventional) {
+          conventionalCommitCount++;
         }
       });
+
+      // 检查是否满足使用自定义格式的最小要求
+      if (RELEASE_CONFIG.FALLBACK_TO_AUTO &&
+        conventionalCommitCount < RELEASE_CONFIG.MIN_COMMITS_FOR_CUSTOM) {
+        this.logger.warn(RELEASE_MESSAGES.FALLBACK);
+        return ''; // 回退到 GitHub 自动生成
+      }
+
+      // 如果启用了智能分类且有不规范的提交被分类
+      if (RELEASE_CONFIG.SMART_CATEGORIZATION && others.length < log.total - conventionalCommitCount) {
+        this.logger.warn(RELEASE_MESSAGES.USING_SMART);
+      }
 
       // 构建 Release Body
       let body = '';
@@ -618,9 +682,14 @@ export class GitFlow {
         body += chores.join('\n') + '\n\n';
       }
 
-      if (others.length > 0) {
-        body += '## Other Changes\n\n';
+      if (others.length > 0 && !RELEASE_CONFIG.STRICT_CONVENTIONAL_COMMITS) {
+        body += '## 📝 Other Changes\n\n';
         body += others.join('\n') + '\n\n';
+      }
+
+      // 添加说明（如果使用了智能分类）
+      if (RELEASE_CONFIG.SMART_CATEGORIZATION && others.length < log.total - conventionalCommitCount) {
+        body += '> 🤖 标记表示通过智能关键词匹配自动分类的提交\n\n';
       }
 
       // 添加完整变更日志链接

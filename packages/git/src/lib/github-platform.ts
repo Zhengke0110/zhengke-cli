@@ -211,8 +211,6 @@ export class GitHubPlatform implements IGitPlatformClient {
         ...(options.previousTagName && { previous_tag_name: options.previousTagName }),
       });
 
-      this.logger.info(success(`GitHub Release 创建成功: ${data.html_url}`));
-
       return {
         id: data.id,
         tagName: data.tag_name,
