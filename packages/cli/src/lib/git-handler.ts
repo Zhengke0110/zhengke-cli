@@ -45,6 +45,13 @@ export interface GitPublishOptions {
 }
 
 /**
+ * Git switch 命令选项
+ */
+export interface GitSwitchOptions {
+  branch?: string;
+}
+
+/**
  * 创建 Git 平台客户端
  */
 async function createPlatformClient(platform?: string, token?: string): Promise<IGitPlatformClient> {
@@ -242,6 +249,107 @@ export async function handleGitPublish(options: GitPublishOptions): Promise<void
     logger.info(success('Git 发布成功'));
   } catch (error) {
     logger.error('Git 发布失败', error);
+    throw error;
+  }
+}
+
+/**
+ * 处理 git switch 命令
+ * 切换到开发分支（develop）
+ */
+export async function handleGitSwitch(options: GitSwitchOptions): Promise<void> {
+  logger.info('🔄 切换到开发分支...');
+
+  try {
+    // 创建平台客户端 - 优先使用GitHub和配置的token
+    const platform = await createPlatformClient(GitPlatform.GITHUB);
+    const gitFlow = new GitFlow(platform);
+    const gitClient = gitFlow.getGitClient();
+
+    // 获取当前分支
+    const currentBranch = await gitClient.getCurrentBranch();
+    logger.info(`当前分支: ${currentBranch}`);
+
+    // 检查是否有未提交的改动
+    const hasChanges = await gitClient.hasUncommittedChanges();
+    if (hasChanges) {
+      const { action } = await inquirer.prompt([{
+        type: 'list',
+        name: 'action',
+        message: '⚠️  检测到未提交的改动，请选择操作:',
+        choices: [
+          { name: '暂存改动并切换 (git stash)', value: 'stash' },
+          { name: '放弃改动并切换 (git checkout -f)', value: 'force' },
+          { name: '取消操作', value: 'cancel' },
+        ],
+      }]);
+
+      if (action === 'cancel') {
+        logger.info('操作已取消');
+        return;
+      }
+
+      if (action === 'stash') {
+        logger.info('💾 暂存未提交的改动...');
+        await gitClient.stash('Auto stash before switching to develop');
+        logger.info(success('改动已暂存，稍后可使用 git stash pop 恢复'));
+      }
+    }
+
+    // 获取所有分支
+    const branches = await gitClient.getBranches();
+    const developBranch = options.branch || 'develop';
+
+    // 检查本地是否有 develop 分支
+    const hasLocalDevelop = branches.local.includes(developBranch);
+    // 检查远程是否有 develop 分支
+    const hasRemoteDevelop = branches.remote.some((b: string) =>
+      b.includes(`origin/${developBranch}`)
+    );
+
+    if (hasLocalDevelop) {
+      // 本地有 develop 分支，直接切换
+      logger.info(`切换到本地 ${developBranch} 分支...`);
+      await gitClient.checkout(developBranch);
+      logger.info(success(`✓ 已切换到分支: ${developBranch}`));
+    } else if (hasRemoteDevelop) {
+      // 本地没有但远程有，从远程创建
+      logger.info(`从远程创建 ${developBranch} 分支...`);
+      await gitClient.checkoutFromRemote(developBranch, `origin/${developBranch}`);
+      logger.info(success(`✓ 已从远程创建并切换到分支: ${developBranch}`));
+    } else {
+      // 本地和远程都没有，创建新的 develop 分支
+      const { createNew } = await inquirer.prompt([{
+        type: 'confirm',
+        name: 'createNew',
+        message: `${developBranch} 分支不存在，是否创建新分支？`,
+        default: true,
+      }]);
+
+      if (!createNew) {
+        logger.info('操作已取消');
+        return;
+      }
+
+      logger.info(`创建新的 ${developBranch} 分支...`);
+      await gitClient.checkoutNewBranch(developBranch);
+      logger.info(success(`✓ 已创建并切换到分支: ${developBranch}`));
+
+      // 询问是否推送到远程
+      const { pushToRemote } = await inquirer.prompt([{
+        type: 'confirm',
+        name: 'pushToRemote',
+        message: '是否将新分支推送到远程？',
+        default: true,
+      }]);
+
+      if (pushToRemote) {
+        await gitClient.push('origin', developBranch, ['--set-upstream']);
+        logger.info(success(`✓ ${developBranch} 分支已推送到远程`));
+      }
+    }    logger.info(success(`✅ 成功切换到 ${developBranch} 分支`));
+  } catch (error) {
+    logger.error('切换分支失败', error);
     throw error;
   }
 }

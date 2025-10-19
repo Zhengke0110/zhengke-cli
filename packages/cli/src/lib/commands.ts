@@ -6,9 +6,11 @@ import {
   handleGitInit,
   handleGitCommit,
   handleGitPublish,
+  handleGitSwitch,
   type GitInitOptions,
   type GitCommitOptions,
   type GitPublishOptions,
+  type GitSwitchOptions,
 } from './git-handler.js';
 import { CliArguments } from './constants.js';
 
@@ -30,6 +32,7 @@ const CommandDescriptions = {
   GIT_INIT: '初始化 Git 仓库',
   GIT_COMMIT: '提交代码到开发分支',
   GIT_PUBLISH: '发布到主分支',
+  GIT_SWITCH: '切换到开发分支',
 
   // Git 选项
   OPTION_PLATFORM: 'Git 平台（github/gitee）',
@@ -41,6 +44,7 @@ const CommandDescriptions = {
   OPTION_MESSAGE: '提交信息',
   OPTION_VERSION_TYPE: '版本类型（major/minor/patch）',
   OPTION_VERSION: '指定版本号',
+  OPTION_BRANCH: '分支名称（默认: develop）',
 } as const;
 
 /**
@@ -61,6 +65,7 @@ const CommandFlags = {
   MESSAGE: '-m, --message <message>',
   VERSION_TYPE: '--type <type>',
   VERSION: '-v, --version <version>',
+  BRANCH: '-b, --branch <branch>',
 } as const;
 
 /**
@@ -138,6 +143,20 @@ export const gitPublishCommand: CommandDefinition = {
 };
 
 /**
+ * git:switch 命令定义
+ */
+export const gitSwitchCommand: CommandDefinition = {
+  name: 'git:switch',
+  description: CommandDescriptions.GIT_SWITCH,
+  options: [
+    { flags: '-b, --branch <branch>', description: CommandDescriptions.OPTION_BRANCH },
+  ],
+  action: wrapAsyncHandler(async (options: GitSwitchOptions) => {
+    await handleGitSwitch(options);
+  }, { logger, debug: isDebugMode() }),
+};
+
+/**
  * 所有命令定义
  */
 export const commands: CommandDefinition[] = [
@@ -145,4 +164,5 @@ export const commands: CommandDefinition[] = [
   gitInitCommand,
   gitCommitCommand,
   gitPublishCommand,
+  gitSwitchCommand,
 ];
