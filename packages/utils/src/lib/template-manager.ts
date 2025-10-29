@@ -349,6 +349,36 @@ export async function installTemplate(
 }
 
 /**
+ * 检测系统中可用的包管理工具
+ */
+function detectPackageManagers(): Array<{ name: string; command: string; display: string }> {
+  const packageManagers = [
+    { name: 'npm', command: 'npm install', display: 'npm' },
+    { name: 'yarn', command: 'yarn install', display: 'Yarn' },
+    { name: 'pnpm', command: 'pnpm install', display: 'pnpm' },
+    { name: 'bun', command: 'bun install', display: 'Bun' },
+  ];
+
+  const availableManagers: Array<{ name: string; command: string; display: string }> = [];
+
+  for (const manager of packageManagers) {
+    try {
+      // 尝试获取版本信息来检测是否安装
+      execSync(`${manager.name} --version`, { 
+        stdio: 'pipe',
+        encoding: 'utf-8'
+      });
+      availableManagers.push(manager);
+    } catch {
+      // 如果命令失败，说明该包管理工具未安装
+      continue;
+    }
+  }
+
+  return availableManagers;
+}
+
+/**
  * 安装项目依赖
  */
 export async function installDependencies(projectPath: string): Promise<void> {
@@ -365,14 +395,41 @@ export async function installDependencies(projectPath: string): Promise<void> {
     return;
   }
 
-  const spinner = ora('正在安装项目依赖...').start();
+  // 检测可用的包管理工具
+  const availableManagers = detectPackageManagers();
+  
+  if (availableManagers.length === 0) {
+    throw new Error('未检测到任何包管理工具，请先安装 npm、yarn、pnpm 或 bun 中的任意一个');
+  }
+
+  let selectedManager = availableManagers[0]; // 默认选择第一个
+
+  // 如果有多个包管理工具，让用户选择
+  if (availableManagers.length > 1) {
+    const { packageManager } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'packageManager',
+        message: '选择要使用的包管理工具:',
+        choices: availableManagers.map(manager => ({
+          name: manager.display,
+          value: manager.name,
+        })),
+        default: availableManagers[0].name,
+      },
+    ]);
+
+    selectedManager = availableManagers.find(m => m.name === packageManager)!;
+  }
+
+  const spinner = ora(`正在使用 ${selectedManager.display} 安装项目依赖...`).start();
 
   try {
-    execSync('npm install', {
+    execSync(selectedManager.command, {
       cwd: projectPath,
       stdio: 'inherit',
     });
-    spinner.succeed('项目依赖安装成功');
+    spinner.succeed(`项目依赖安装成功 (使用 ${selectedManager.display})`);
   } catch (error) {
     spinner.fail('项目依赖安装失败');
     throw new FileSystemError(
